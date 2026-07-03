@@ -1,0 +1,28 @@
+module List where
+
+import Daml.Script
+import DA.List (head, tail, last, sort)
+
+listTest: Script ()
+listTest = script do
+    let
+        intList = [1, 2, 4]
+        fruitList = ["orange", "apple", "banana"]
+        veggieList = ["carrot", "potato"]
+
+        rangeList = [10 .. 20]
+        evenList = [2, 4 .. 22]
+
+        fruitNVeggieList = fruitList <> veggieList
+
+    debug("Head: " <> show (head fruitList))
+    debug("Tail: " <> show (tail intList))
+    debug("Last: " <> show (last intList))
+
+    debug("Length: " <> show (length veggieList))
+    debug("range: " <> show rangeList)
+    debug("even: " <> show evenList)
+    debug("prepend: " <> show ("mango" :: fruitList))
+
+    debug(fruitNVeggieList)
+    debug("sort: " <> show(sort(fruitNVeggieList)))
