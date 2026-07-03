@@ -1,0 +1,44 @@
+module Main where
+
+import Daml.Script
+
+increment n = n + 1
+
+add : Additive a => a -> a -> a
+add x y = x + y
+
+multiply: Int -> Int -> Int
+multiply x y = x * y
+
+testFunctions: Script ()
+testFunctions = script do
+  debug $ increment 3
+  debug (increment 4)
+  debug $ add 3 5
+  debug $ multiply 3 7
+
+-- Lab 1: Problem statement 1
+
+quadFunction: Int -> Int -> Int -> Int
+quadFunction x y z = (3 * x ^ 2) + 2 * y + z
+
+testQuadFunction: Script()
+testQuadFunction = script do
+  debug (quadFunction 1 2 3)
+  debug ((\x y z -> (3 * x ^ 2) + 2 * y + z) 1 2 3)
+
+-- Lab 1: Problem statement 2
+
+doubleMe: Int -> Int
+doubleMe x = x * 2
+
+doubleUs: Int -> Int -> Int
+doubleUs x y = doubleMe x + doubleMe y
+
+testDouble: Script()
+testDouble = script do
+  debug (doubleMe 3)
+  debug (doubleUs 3 4)
+
+  -- using infix notation
+  debug (3 `doubleUs` 4)
