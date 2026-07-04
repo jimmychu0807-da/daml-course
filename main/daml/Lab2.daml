@@ -1,9 +1,49 @@
 module Lab2 where
 
 import Daml.Script
+import DA.List as List
+import DA.Text as Text
+import DA.Map as Map
 
 problem_01 = script do
     let
         song = [("do", "a deer, a female deer"), ("re", "a drop of golden sun"), ("mi", "a name, I call myself"), ("fa", "a long long way to run")]
 
+        firstEl = head song
+        secondEl = head(tail(song))
+        thirdEl = head(tail(tail(song)))
+        forthEl = last song
+
+        noteList = [firstEl._1, secondEl._1, thirdEl._1, forthEl._1]
+        descList = [firstEl._2, secondEl._2, thirdEl._2, forthEl._2]
+
+    debug(noteList)
+    debug(descList)
+    debug(List.reverse noteList)
+    debug(List.reverse descList)
+
+    let
+        noteMap = Map.fromList song
+
+    debug(Map.lookup "do" noteMap)
+    debug(Map.lookup "re" noteMap)
+    debug(Map.lookup "mi" noteMap)
+    debug(Map.lookup "fa" noteMap)
+
+    return ()
+
+termFrequency: Text -> Text -> Decimal
+termFrequency needle hay =
+    let
+        ttlList = Text.words hay
+        needleList = List.filter (== needle) ttlList
+
+        listLen = List.length ttlList
+        needleLen = List.length needleList
+        val = intToDecimal(needleLen) / intToDecimal(listLen)
+    in
+        val
+
+problem_02 = script do
+    debug $ termFrequency "long" "a long long way to run"
     return ()

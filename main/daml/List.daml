@@ -1,7 +1,7 @@
 module List where
 
 import Daml.Script
-import DA.Tuple (thd3, snd3, fst3)
+import DA.Tuple (snd3, fst3)
 import DA.Set as Set
 import DA.List (head, tail, last, sort)
 import DA.Map as Map
