@@ -1,6 +1,8 @@
 module List where
 
 import Daml.Script
+import DA.Tuple (thd3, snd3, fst3)
+import DA.Set as Set
 import DA.List (head, tail, last, sort)
 
 listTest: Script ()
@@ -26,3 +28,35 @@ listTest = script do
 
     debug(fruitNVeggieList)
     debug("sort: " <> show(sort(fruitNVeggieList)))
+    debug("---")
+
+tupleTest = script do
+    let
+        twoTuple = ("abc", 123)
+        threeTuple = ("abc", 123, True)
+        nTuple = (1, "hello", True, [3, 4])
+
+    debug(fst twoTuple)
+    debug(snd twoTuple)
+    debug(fst3 threeTuple)
+    debug(snd3 threeTuple)
+
+    debug(nTuple._1)
+    debug(nTuple._4)
+
+setTest = script do
+    let
+        fruitSet: Set Text
+        fruitSet = Set.empty
+
+    let fruitList = ["apple", "banana", "orange", "apple"]
+    let fruitSet = Set.fromList fruitList
+
+    debug(fruitSet)
+    debug(Set.size fruitSet)
+    debug(Set.member "mango" fruitSet)
+
+    let newFruitSet = Set.insert "mango" fruitSet
+    debug(Set.member "mango" newFruitSet)
+
+    return ()
