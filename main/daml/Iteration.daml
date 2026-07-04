@@ -1,0 +1,16 @@
+module Iteration where
+
+import Daml.Script
+
+fibonacci: Int -> Int
+fibonacci n 
+    | n <= 2 = 1
+    | otherwise = fibonacci(n - 2) + fibonacci(n - 1)
+
+moduloUsingMap: [Int] -> Int -> [Int]
+moduloUsingMap x y = map (\el -> el % y) x
+
+testFibonacci = script do
+    debug $ fibonacci 7
+
+    debug(moduloUsingMap [2 .. 10] 3)
