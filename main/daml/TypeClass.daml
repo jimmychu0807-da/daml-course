@@ -1,0 +1,41 @@
+module TypeClass where
+
+import Daml.Script
+import DA.Text (sha256)
+
+data DataType = DataType with
+    field1: Text
+    field2: Int
+    field3: Bool
+
+class Encryptable i o where
+    encrypt: i -> o
+
+data PersonalRecord = PersonalRecord with
+    name: Text
+    id: Int
+  deriving (Show, Eq)
+
+instance Encryptable PersonalRecord Text where
+    encrypt rec = sha256(show(rec.id) <> rec.name)
+
+testTypeclass = script do
+    let
+        aliceData = PersonalRecord with
+            name = "Alice"
+            id = 1
+
+        bobData = PersonalRecord with
+            name = "Bob"
+            id = 1
+
+    debug(aliceData)
+    debug(aliceData == bobData)
+
+    let
+        encryptedData = encrypt(aliceData): Text
+    
+    debug(encryptedData)
+
+    return ()
+
