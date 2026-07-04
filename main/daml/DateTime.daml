@@ -1,0 +1,43 @@
+module DateTime where
+
+import Daml.Script
+import DA.Date
+import DA.Time
+
+dateTypeTest: Script ()
+dateTypeTest = script do
+
+    now1 <- getTime
+    debug("Time: " <> show now1)
+
+    let
+        dateOfBirth: Date
+        dateOfBirth = date 2000 Jan 02
+
+        timeOfBirth: Time
+        timeOfBirth = time dateOfBirth 15 30 10
+
+        age1: RelTime
+        age1 = subTime now1 timeOfBirth
+
+    debug("DOB: " <> show dateOfBirth)
+    debug("Time: " <> show timeOfBirth)
+    debug("Age: " <> show age1) 
+
+    let
+        today: Date
+        today = date 2026 Jul 3
+
+        now2: Time
+        now2 = time today 18 32 00
+    
+    setTime now2
+    debug("Now2 " <> show now2)
+
+    let
+        age2: RelTime
+        age2 = subTime now2 timeOfBirth
+    
+    debug("Age 2 " <> show age2)
+
+    return ()

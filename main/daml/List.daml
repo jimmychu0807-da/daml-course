@@ -4,6 +4,7 @@ import Daml.Script
 import DA.Tuple (thd3, snd3, fst3)
 import DA.Set as Set
 import DA.List (head, tail, last, sort)
+import DA.Map as Map
 
 listTest: Script ()
 listTest = script do
@@ -58,5 +59,21 @@ setTest = script do
 
     let newFruitSet = Set.insert "mango" fruitSet
     debug(Set.member "mango" newFruitSet)
+
+    return ()
+
+mapTest = script do
+    let
+        wordMap: Map Text Text
+        wordMap = Map.empty
+
+    let
+        words = [("a", "apple"), ("b", "banana")]
+        wordMap = Map.fromList words
+
+    debug(show wordMap)
+    debug(Map.size wordMap)
+    debug(Map.lookup "a" wordMap)
+    debug(Map.lookup "c" wordMap)
 
     return ()
