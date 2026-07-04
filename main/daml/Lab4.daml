@@ -1,6 +1,10 @@
 module Lab4 where
 
 import Daml.Script
+import DA.List as List
+import DA.Math as Math
+
+-- Lab 1
 
 getLetterGradeUsingIf: Decimal -> Text
 getLetterGradeUsingIf score =
@@ -54,5 +58,39 @@ testGrades = script do
     debug $ getAverageGradeLetter 98.0 83.0
     debug $ getAverageGradeLetter 60.0 70.0
 
+
+    return()
+
+-- Lab 2
+computeArea: [Decimal] -> Decimal
+computeArea sizes = 
+    let 
+        a = List.head sizes
+        b = List.head(List.tail(sizes))
+        c = List.last sizes
+        s = (a + b + c) / 2.0
+    in
+        Math.sqrt(s * (s - a) * (s - b) * (s - c))
+
+triangleArea: [Decimal] -> Either Text Decimal
+triangleArea list =
+    let 
+        listLen = List.length(list)
+        allPositive = List.all (> 0.0) list
+        
+        sortedList = List.sort list
+        max = List.last sortedList
+        sumOfFirstTwo = List.head(sortedList) + List.head(List.tail(sortedList))
+    in
+        if listLen /= 3 then Left("Error: Triangle has 3 sides")
+        else if not allPositive then Left("Error: Side of a triangle cannot be 0.0")
+        else if sumOfFirstTwo <= max then Left("Error: This can't be a triangle as sum of any two sides must be greater than the third")
+        else Right(computeArea list)
+
+testTriangle = script do
+    debug $ triangleArea [4.0, 2.0, 5.0]
+    debug $ triangleArea [1.0, 2.0, 3.0]
+    debug $ triangleArea [1.0, 2.0]
+    debug $ triangleArea [1.0, 2.0, 0.0]
 
     return()
