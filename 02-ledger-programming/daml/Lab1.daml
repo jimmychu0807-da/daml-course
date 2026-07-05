@@ -53,6 +53,11 @@ template CLPApplication
                     accountTimestamp = accountTimestamp
                     dob = dob
                     points = points
+        
+        choice RejectApplication: Text
+            controller airline
+            do
+                return "Application rejected"
 
 template CLPAccount
     with
