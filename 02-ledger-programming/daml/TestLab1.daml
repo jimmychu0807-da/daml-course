@@ -36,4 +36,11 @@ testSubmitAndAcceptCLPApplication = script do
                 now = time (date 2023 Mar 01) 10 30 0
                 customerDob = date 2000 Jan 05
 
+    -- Airline accepts the application and creates a CLP acct
+    aliceCLPAccount <- submit airline do
+        exerciseCmd aliceCLPAppId AcceptApplication
+            with
+                points = 0
+                accountTimestamp = now
+
     return ()

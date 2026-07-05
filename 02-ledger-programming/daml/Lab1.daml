@@ -16,7 +16,7 @@ template CLPApplication
     where
         signatory customer
         observer airline
-        
+
         choice SubmitApplication: ContractId CLPApplication
             with
                 appCustomer: Party
@@ -28,7 +28,6 @@ template CLPApplication
                 now: Time
                 customerDob: Date
             controller customer
-            
             do
                 create this with
                     name = customerName
@@ -37,3 +36,38 @@ template CLPApplication
                     phone = customerPhone
                     appTimestamp = now
                     dob = customerDob
+        
+        choice AcceptApplication: ContractId CLPAccount
+            with
+                points: Int
+                accountTimestamp: Time
+            controller airline
+            do
+                create CLPAccount with
+                    customer = customer
+                    airline = airline
+                    name = name
+                    address = address
+                    email = email
+                    phone = phone
+                    accountTimestamp = accountTimestamp
+                    dob = dob
+                    points = points
+
+template CLPAccount
+    with
+        customer: Party
+        airline: Party
+
+        -- fields in the template
+        name: Text
+        address: Text
+        email: Text
+        phone: Optional Text
+        accountTimestamp: Time
+        dob: Date
+        points: Int
+
+    where
+        signatory airline
+        observer customer
