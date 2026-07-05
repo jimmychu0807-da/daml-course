@@ -1,8 +1,0 @@
-module Test where
-
-import Main
-import Daml.Script
-
-testIncrement : Script ()
-testIncrement = script do
-  debug $ increment 3

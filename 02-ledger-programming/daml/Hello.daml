@@ -1,0 +1,6 @@
+module Hello where 
+
+import Daml.Script
+
+testHello = script do
+    debug $ "Hello"

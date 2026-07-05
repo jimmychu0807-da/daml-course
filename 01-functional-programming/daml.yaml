@@ -1,5 +1,5 @@
 sdk-version: 3.5.2
-name: functions-main
+name: functional-programming
 source: daml
 version: 0.0.1
 dependencies:

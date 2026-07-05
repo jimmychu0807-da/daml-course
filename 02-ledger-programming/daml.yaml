@@ -1,10 +1,8 @@
 sdk-version: 3.5.2
-name: functions-test
+name: ledger-programming
 source: daml
 version: 0.0.1
 dependencies:
   - daml-prim
   - daml-stdlib
   - daml-script
-data-dependencies:
-  - ../main/.daml/dist/functions-main-0.0.1.dar
