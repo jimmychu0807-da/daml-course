@@ -1,0 +1,17 @@
+module TypeVariable where
+
+import Daml.Script
+
+hello: Show a => a -> Text
+hello a = "Hello " <> show a
+
+safeDiv: Int -> Int -> Optional Int
+safeDiv _ 0 = None
+safeDiv x y = Some(x / y)
+
+testHello = script do
+    debug $ hello 12
+    debug $ hello [1, 2, 3, 4]
+    debug $ hello ("abc", [1, 2 ,3])
+
+    debug $ safeDiv 5 2
