@@ -40,8 +40,17 @@ The content contains the compiled project module (module.dalf), all the module s
 
 Running the daml script inside VS Code (I'm using Cursor IDE)
 
-[ss01](./assets/ss01.png)
+![ss-01](./assets/ss01.png)
 
 Running with sandbox, run with `-v --debug` flags, each transaction has **7 phases**.
 
-[ss02](./assets/ss02.png)
+![ss-02](./assets/ss02.png)
+
+## Theory - what are signatories and observers?
+
+**Signatories** are ones that need to approve in order to create the contract.
+
+**Observers** are ones who have read access to the contract content.
+
+## Hands-on - Implement and test the [propose-accept pattern](https://docs.canton.network/appdev/modules/m2-multi-party-workflows#the-propose-accept-pattern)
+
