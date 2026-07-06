@@ -104,3 +104,19 @@ There are 3 parties above:
 
 Each party is running a partcipant, and a splice (synchronizer?)
 
+To run `docker compose` command yourself, you need to connect all the env files, user profiles, and compose config files together. For instance `make canton-console` is a short-hand of:
+
+```sh
+docker compose -f compose.yaml -f /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/localnet/compose.yaml -f /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/splice-onboarding/compose.yaml -f /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/pqs/compose.yaml --env-file .env --env-file .env.local --env-file /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/localnet/compose.env --env-file /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/localnet/env/common.env --env-file /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/pqs/compose.env --profile app-provider --profile app-user --profile sv --profile swagger-ui --profile pqs-app-provider   -f /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/localnet/resource-constraints.yaml -f /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/splice-onboarding/resource-constraints.yaml -f /Users/jimmychu/src/self/cn-quickstart/quickstart/docker/modules/pqs/resource-constraints.yaml -f ./docker/backend-service/resource-constraints.yaml run --rm --name canton-console console
+```
+
+## Hands-on - Deploy your daml project to localnet
+
+Couldn't quite get a hang on the orchestration of docker compose files and all the containers.
+
+I ended up copied over the my ledger-programming project into [cn-quickstart/daml](https://github.com/jimmychu0807-da/cn-quickstart/tree/dev/quickstart/daml/02-ledger-programming), and added a line to map the [dar file into the canton console container](https://github.com/jimmychu0807-da/cn-quickstart/blob/2a2e49c22f40c5fae5e95fe620d6a3c22bbcff30/quickstart/docker/modules/localnet/compose.yaml#L186). Then in Canton console, I can run the following:
+
+```
+`app-user`.dars.upload("/canton/dars/ledger-programming-0.0.1.dar")
+res1: String = "1527e22d7d63f0d6441021fe04a60377bfeacf7571c13d39ea0f19cb3e8dc46c"
+```
