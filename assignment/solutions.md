@@ -1,4 +1,4 @@
-Refer to the [CX engineering technical onboarding](./cx-engin-tech-knowledge-onboarding.pdf) document.
+Refer to the [CX engineering technical onboarding](./cx-engin-tech-onboarding.pdf) document.
 
 # Daml Development
 
