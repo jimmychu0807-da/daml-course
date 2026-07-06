@@ -1,4 +1,4 @@
-Refer to the [CX engineering technical onboarding](./cx-engin-tech-knowledge-onboarding.pdf) document.
+Refer to the [CX engineering technical onboarding](./cx-engin-tech-onboarding.pdf) document.
 
 # Daml Development
 
@@ -56,3 +56,5 @@ Running with sandbox, run with `-v --debug` flags, each transaction has **7 phas
 
 ## Hands-on - Implement and test the [propose-accept pattern](https://docs.canton.network/appdev/modules/m2-multi-party-workflows#the-propose-accept-pattern)
 
+- [`ProposeAcceptPattern.daml`](./templates/daml/ProposeAcceptPattern.daml)
+- [`TestProposeAcceptPattern.daml`](./templates/daml/TestProposeAcceptPattern.daml)
