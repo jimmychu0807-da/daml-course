@@ -1,3 +1,5 @@
+Refer to the [CX engineering technical onboarding](./cx-engin-tech-knowledge-onboarding.pdf) document.
+
 # Daml Development
 
 ## Hands-on: Write your first daml application (build and run with dpm sandbox)
