@@ -58,3 +58,7 @@ Running with sandbox, run with `-v --debug` flags, each transaction has **7 phas
 
 - [`ProposeAcceptPattern.daml`](./templates/daml/ProposeAcceptPattern.daml)
 - [`TestProposeAcceptPattern.daml`](./templates/daml/TestProposeAcceptPattern.daml)
+
+## Theory - Consider also [the delegation pattern](https://docs.canton.network/appdev/modules/m2-multi-party-workflows#delegation-patterns). How does it compare to the propose-accept pattern? In which scenarios would you use each pattern?
+
+Propose-accept is used when there is one party and counterparty and they do a trade with each other. Delegation is you are granting a right to another party so they can act on behalf of you i.e. on governance voting. You can also withdraw the granted right afterwards.
