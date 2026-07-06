@@ -17,6 +17,7 @@ testCreateAndAccept = script do
             asset = "Bitcoin"
             price = 62000.00
     
+    -- bob accepts
     tradeId <- submit bob do
         exerciseCmd tradeProposalId Accept
 
@@ -24,6 +25,7 @@ testCreateAndAccept = script do
 
 -- alice create a contract
 -- alice withdraws
+testCreateAndWithdraw : Script ()
 testCreateAndWithdraw = script do
     alice <- allocateParty "Alice"
     bob <- allocateParty "Bob"
@@ -36,6 +38,7 @@ testCreateAndWithdraw = script do
             asset = "Bitcoin"
             price = 62000.00
 
+    -- alice withdraws
     submit alice do
         exerciseCmd tradeProposalId Withdraw
     
