@@ -1,0 +1,42 @@
+module TestProposeAcceptPattern where
+
+import Daml.Script
+import ProposeAcceptPattern
+
+-- alice create a contract
+-- bob accepts
+testCreateAndAccept = script do
+    alice <- allocateParty "Alice"
+    bob <- allocateParty "Bob"
+
+    -- alice create a contract
+    tradeProposalId <- submit alice do
+        createCmd TradeProposal with
+            proposer = alice
+            counterparty = bob
+            asset = "Bitcoin"
+            price = 62000.00
+    
+    tradeId <- submit bob do
+        exerciseCmd tradeProposalId Accept
+
+    return()
+
+-- alice create a contract
+-- alice withdraws
+testCreateAndWithdraw = script do
+    alice <- allocateParty "Alice"
+    bob <- allocateParty "Bob"
+
+    -- alice create a contract
+    tradeProposalId <- submit alice do
+        createCmd TradeProposal with
+            proposer = alice
+            counterparty = bob
+            asset = "Bitcoin"
+            price = 62000.00
+
+    submit alice do
+        exerciseCmd tradeProposalId Withdraw
+    
+    return()
