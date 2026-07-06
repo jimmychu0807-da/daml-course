@@ -61,7 +61,9 @@ Running with sandbox, run with `-v --debug` flags, each transaction has **7 phas
 
 ## Theory - Consider also [the delegation pattern](https://docs.canton.network/appdev/modules/m2-multi-party-workflows#delegation-patterns). How does it compare to the propose-accept pattern? In which scenarios would you use each pattern?
 
-Propose-accept is used when there is one party and counterparty and they do a trade with each other. Delegation is you are granting a right to another party so they can act on behalf of you i.e. on governance voting. You can also withdraw the granted right afterwards.
+Propose-accept is used when there is one party and a counterparty and they are doing a trade with each other. 
+
+Delegation is used when you are granting a right to another party so they can act on behalf of you i.e. on governance voting. You can also withdraw the granted right afterwards.
 
 ## Hands-on - Launch [localnet](https://docs.canton.network/appdev/modules/m5-localnet-development)
 
@@ -112,9 +114,7 @@ docker compose -f compose.yaml -f /Users/jimmychu/src/self/cn-quickstart/quickst
 
 ## Hands-on - Deploy your daml project to localnet
 
-Couldn't quite get a hang on the orchestration of docker compose files and all the containers.
-
-I ended up copied over the my ledger-programming project into [cn-quickstart/daml](https://github.com/jimmychu0807-da/cn-quickstart/tree/dev/quickstart/daml/02-ledger-programming), and added a line to map the [dar file into the canton console container](https://github.com/jimmychu0807-da/cn-quickstart/blob/2a2e49c22f40c5fae5e95fe620d6a3c22bbcff30/quickstart/docker/modules/localnet/compose.yaml#L186). Then in Canton console, I can run the following:
+Trying to get a hang on the orchestration of docker compose files and all the containers in the **cn-quickstart** application. I ended up copied my ledger-programming project over into [cn-quickstart/daml](https://github.com/jimmychu0807-da/cn-quickstart/tree/assignment/quickstart/daml/02-ledger-programming), and added a line in the dockerfile to map the [dar file in the canton console container](https://github.com/jimmychu0807-da/cn-quickstart/blob/2a2e49c22f40c5fae5e95fe620d6a3c22bbcff30/quickstart/docker/modules/localnet/compose.yaml#L186). Then upload the dar file in Canton console:
 
 ```
 `app-user`.dars.upload("/canton/dars/ledger-programming-0.0.1.dar")
