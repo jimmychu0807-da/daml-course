@@ -23,7 +23,7 @@ testFetch = script do
     alice <- allocateParty "Alice"
     bank <- allocateParty "Bank"
 
-    aliceAccountCid <- submitMulti [alice, bank] [] do
+    aliceAccountCid <- submit (actAs bank <> actAs alice) do
         createCmd BankAccount with
             bank
             accountOwner = alice
