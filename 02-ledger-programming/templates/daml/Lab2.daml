@@ -41,6 +41,15 @@ template CLPApplication
                     phone = customerPhone
                     timestamp = timeStamp
                     dob = customerDob
+        
+        choice ReviewApplication: Optional(ContractId CLPAccount)
+            controller airline
+            do
+                appl <- fetch @CLPApplication id
+                key = (airline, appl.id)
+                acctInfo <- lookupByKey @CLPAccount key
+
+                
 
 template CLPAccount
     with

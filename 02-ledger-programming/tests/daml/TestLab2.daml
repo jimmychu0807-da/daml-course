@@ -39,4 +39,8 @@ testSubmitAndAcceptCLPApplication = script do
             timeStamp = now
             customerDob = date 2000 Jan 05   
 
+    -- Airline reviews application
+    aliceCLPAccount <- submit airline do
+        exerciseCmd aliceCLPAppId ReviewApplication
+
     return()
