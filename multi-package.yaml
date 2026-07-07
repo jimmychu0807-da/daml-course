@@ -2,5 +2,6 @@ sdk-version: 3.5.2
 
 packages:
 - ./01-functional-programming
-- ./02-ledger-programming
+- ./02-ledger-programming/templates
+- ./02-ledger-programming/tests
 - ./assignment/templates

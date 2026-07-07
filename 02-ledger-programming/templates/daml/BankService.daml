@@ -40,3 +40,10 @@ template BankService
             controller bank
             do
                 fetchByKey @BankAccount key
+
+        nonconsuming choice CheckKey: ()
+            with key: (Party, Party)
+            controller bank 
+            do
+                lookupByKey @BankAccount key
+                return ()

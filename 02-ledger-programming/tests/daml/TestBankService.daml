@@ -7,7 +7,7 @@ testBankService = script do
     bank <- allocateParty "Bank"
     alice <- allocateParty "Alice"
 
-    aliceAccountCid <- submitMulti [bank, alice] [] do
+    aliceAccountCid <- submit (actAs bank <> actAs alice) do
         createCmd BankAccount with
             bank
             accountOwner = alice
@@ -22,6 +22,7 @@ testBankService = script do
 testFetch = script do
     alice <- allocateParty "Alice"
     bank <- allocateParty "Bank"
+    bob <- allocateParty "Bob"
 
     aliceAccountCid <- submit (actAs bank <> actAs alice) do
         createCmd BankAccount with
@@ -42,8 +43,14 @@ testFetch = script do
     fetchByKeyAliceInfo <- submit bank do
         exerciseCmd bankServiceCid FindAccountByKey with
             key = (bank, alice)
-    
+
     debug $ aliceAccount.balance
     debug $ fetchByKeyAliceInfo
+
+    submit bank do
+        exerciseCmd bankServiceCid CheckKey with key = (bank, alice)
+    
+    submit bank do
+        exerciseCmd bankServiceCid CheckKey with key = (bank, bob)
 
     return()
