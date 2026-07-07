@@ -9,10 +9,34 @@ template BankAccount
     where
         signatory bank, accountOwner
 
+        key (bank, accountOwner): (Party, Party)
+        maintainer key._1
+
         -- this is returning a ContractId of a bank account.
         choice Deposit: ContractId BankAccount
-            with amount: Numeric 2
-                controller accountOwner 
-                do
-                    create this with
-                        balance = balance + amount
+            with 
+                amount: Numeric 2
+            controller accountOwner 
+            do
+                create this with
+                    balance = balance + amount
+
+template BankService
+    with
+        bank: Party
+    where 
+        signatory bank
+
+        nonconsuming choice FindAccountById: BankAccount
+            with
+                id: ContractId BankAccount
+            controller bank 
+            do
+                fetch @BankAccount id
+        
+        nonconsuming choice FindAccountByKey: (ContractId BankAccount, BankAccount)
+            with 
+                key: (Party, Party)
+            controller bank
+            do
+                fetchByKey @BankAccount key
