@@ -1,0 +1,42 @@
+module TestLab2 where
+
+import Daml.Script
+import Lab2
+import DA.Date (toDateUTC, date, Month(Jan), Month(Mar))
+import DA.Time (time)
+
+testSubmitAndAcceptCLPApplication: Script()
+testSubmitAndAcceptCLPApplication = script do
+    alice <- allocateParty "Alice"
+    airline <- allocateParty "Epic Airlines"
+
+    setTime (time (date 2023 Mar 01) 10 30 0)
+    now <- getTime
+
+    -- Alice creates a blank CLPApplication
+    aliceCLPAppId <- submit alice do
+        createCmd CLPApplication with
+            customer = alice
+            airline
+            id = ""
+            name = ""
+            address = ""
+            email = ""
+            phone = Some ""
+            timestamp = now
+            dob = toDateUTC now
+
+    -- Alice submit the application with details
+    aliceCLPAppId <- submit alice do
+        exerciseCmd aliceCLPAppId SubmitApplication with
+            appCustomer = alice
+            appAirline = airline
+            customerId = "123"
+            customerName = "Alice"
+            customerAddress = "123 Main St ABCD"
+            customerEmail = "alice@wonderland.io"
+            customerPhone = Some "01-555-555-1234"
+            timeStamp = now
+            customerDob = date 2000 Jan 05   
+
+    return()
