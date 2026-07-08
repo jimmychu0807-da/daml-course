@@ -1,0 +1,35 @@
+name: Daml CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+
+      - name: Install DPM
+        run: |
+          curl https://get.digitalasset.com/install/install.sh | sh
+          echo "$HOME/.dpm/bin" >> "$GITHUB_PATH"
+
+      - name: Verify DPM installation
+        run: |
+          # dpm version
+          dpm --version 
+          # the Daml SDK version
+          dpm version
+
+      - name: Build all Daml packages
+        run: |
+          dpm build --all
