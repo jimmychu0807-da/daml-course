@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SDK_VERSION: 3.5.2
 
     steps:
       - name: Checkout repository
@@ -26,10 +28,20 @@ jobs:
       - name: Verify DPM installation
         run: |
           # dpm version
+          echo "dpm version"
           dpm --version 
           # the Daml SDK version
+          echo "DAML SDK version"
           dpm version
 
       - name: Build all Daml packages
         run: |
           dpm build --all
+
+      - name: Test all Daml packages
+        run: |
+          set -euo pipefail
+          grep -E '^- ' multi-package.yaml | sed 's/^- //' | while IFS= read -r pkg; do
+            echo "==> Testing $pkg"
+            DAML_PACKAGE="$pkg" dpm test
+          done
