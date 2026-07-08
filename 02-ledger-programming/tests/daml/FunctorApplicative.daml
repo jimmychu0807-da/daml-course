@@ -1,0 +1,26 @@
+module FunctorApplicative where
+
+import Daml.Script
+
+print = script do
+    let
+        x = [(*0), (+100), (^2)] <*> [1, 2, 3]
+
+        y = [(*), (+)] <*> [1, 2] <*> [3, 4]
+
+        z = (*) <$> [1, 2, 3] <*> [1, 2, 3]
+
+    debug $ x
+    debug $ y
+    debug $ z
+
+    return ()
+
+print2 = script do
+    let 
+        x = fmap (%2) [3, 7, 8]
+        y = (%2) <$> [3, 7, 8]
+
+    debug $ x
+    debug $ y
+    return ()
