@@ -43,4 +43,35 @@ testSubmitAndAcceptCLPApplication = script do
     aliceCLPAccount <- submit airline do
         exerciseCmd aliceCLPAppId ReviewApplication
 
+    -- Alice creates another blank acct
+    aliceCLPAppId <- submit alice do
+        createCmd CLPApplication with
+            customer = alice
+            airline
+            id = ""
+            name = ""
+            address = ""
+            email = ""
+            phone = Some ""
+            timestamp = now
+            dob = toDateUTC now
+
+    -- Alice submits another appl
+    aliceCLPAppId <- submit alice do 
+        exerciseCmd aliceCLPAppId SubmitApplication 
+            with
+                appCustomer = alice 
+                appAirline = airline
+                customerId = "123"
+                customerName = "Alice"
+                customerAddress = "123 Main St ABCD"
+                customerEmail = "alice@wonderland.io"
+                customerPhone = Some " 01-555-555-1234"
+                timeStamp = now
+                customerDob = date 2000 Jan 05    
+
+    -- Airline reviews it but no new account for Alice should be created
+    None <- submit airline do 
+        exerciseCmd aliceCLPAppId ReviewApplication 
+
     return()
