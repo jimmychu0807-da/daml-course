@@ -1,11 +1,12 @@
 sdk-version: 3.5.2
-name: assignment-templates
+name: ledger-programming-tests
 source: daml
 version: 0.0.1
 dependencies:
   - daml-prim
   - daml-stdlib
   - daml-script
+data-dependencies:
+  - ../templates/.daml/dist/ledger-programming-templates-0.0.1.dar
 build-options:
   - --target=2.3
-  - -Wno-template-interface-depends-on-daml-script

@@ -1,0 +1,56 @@
+module TestBankService where
+
+import Daml.Script
+import BankService
+
+testBankService = script do
+    bank <- allocateParty "Bank"
+    alice <- allocateParty "Alice"
+
+    aliceAccountCid <- submit (actAs bank <> actAs alice) do
+        createCmd BankAccount with
+            bank
+            accountOwner = alice
+            balance = 100.00
+    
+    aliceAccount <- submit alice do
+        exerciseCmd aliceAccountCid Deposit with
+            amount = 20.00
+    
+    return()
+
+testFetch = script do
+    alice <- allocateParty "Alice"
+    bank <- allocateParty "Bank"
+    bob <- allocateParty "Bob"
+
+    aliceAccountCid <- submit (actAs bank <> actAs alice) do
+        createCmd BankAccount with
+            bank
+            accountOwner = alice
+            balance = 100.0
+    
+    bankServiceCid <- submit bank do
+        createCmd BankService with
+            bank
+
+    -- fetch by ID
+    aliceAccount <- submit bank do
+        exerciseCmd bankServiceCid FindAccountById with
+            id = aliceAccountCid
+    
+    -- fetch by key
+    fetchByKeyAliceInfo <- submit bank do
+        exerciseCmd bankServiceCid FindAccountByKey with
+            key = (bank, alice)
+
+    debug $ aliceAccount.balance
+    debug $ fetchByKeyAliceInfo
+
+    submit bank do
+        exerciseCmd bankServiceCid CheckKey with key = (bank, alice)
+    
+    submit bank do
+        exerciseCmd bankServiceCid CheckKey with key = (bank, bob)
+
+    return()

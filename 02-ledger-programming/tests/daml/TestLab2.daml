@@ -1,0 +1,155 @@
+module TestLab2 where
+
+import Daml.Script
+import Lab2
+import DA.Date (toDateUTC, date, Month(Jan), Month(Mar), Month(Jul))
+import DA.Time (time)
+import DA.List as List
+
+testSubmitAndAcceptCLPApplication: Script()
+testSubmitAndAcceptCLPApplication = script do
+    alice <- allocateParty "Alice"
+    airline <- allocateParty "Epic Airlines"
+
+    setTime (time (date 2023 Mar 01) 10 30 0)
+    now <- getTime
+
+    -- Alice creates a blank CLPApplication
+    aliceCLPAppId <- submit alice do
+        createCmd CLPApplication with
+            customer = alice
+            airline
+            id = ""
+            name = ""
+            address = ""
+            email = ""
+            phone = Some ""
+            timestamp = now
+            dob = toDateUTC now
+
+    -- Alice submit the application with details
+    aliceCLPAppId <- submit alice do
+        exerciseCmd aliceCLPAppId SubmitApplication with
+            appCustomer = alice
+            appAirline = airline
+            customerId = "123"
+            customerName = "Alice"
+            customerAddress = "123 Main St ABCD"
+            customerEmail = "alice@wonderland.io"
+            customerPhone = Some "01-555-555-1234"
+            timeStamp = now
+            customerDob = date 2000 Jan 05   
+
+    -- Airline reviews application
+    aliceCLPAccount <- submit airline do
+        exerciseCmd aliceCLPAppId ReviewApplication
+
+    -- Alice creates another blank acct
+    aliceCLPAppId <- submit alice do
+        createCmd CLPApplication with
+            customer = alice
+            airline
+            id = ""
+            name = ""
+            address = ""
+            email = ""
+            phone = Some ""
+            timestamp = now
+            dob = toDateUTC now
+
+    -- Alice submits another appl
+    aliceCLPAppId <- submit alice do 
+        exerciseCmd aliceCLPAppId SubmitApplication 
+            with
+                appCustomer = alice 
+                appAirline = airline
+                customerId = "123"
+                customerName = "Alice"
+                customerAddress = "123 Main St ABCD"
+                customerEmail = "alice@wonderland.io"
+                customerPhone = Some " 01-555-555-1234"
+                timeStamp = now
+                customerDob = date 2000 Jan 05    
+
+    -- Airline reviews it but no new account for Alice should be created
+    None <- submit airline do 
+        exerciseCmd aliceCLPAppId ReviewApplication 
+
+    return()
+
+testAliceAndBobAddPoints = script do
+    alice <- allocateParty "Alice"
+    bob <- allocateParty "Bob"
+    airline <- allocateParty "Epic Airlines"
+
+    setTime (time (date 2026 Jul 08) 11 40 0)
+    now <- getTime
+
+    -- Alice creates a blank CLPApplication
+    aliceCLPAppId <- submit alice do
+        createCmd CLPApplication with
+            customer = alice
+            airline
+            id = ""
+            name = ""
+            address = ""
+            email = ""
+            phone = Some ""
+            timestamp = now
+            dob = toDateUTC now
+
+    -- Alice submit the application with details
+    aliceCLPAppId <- submit alice do
+        exerciseCmd aliceCLPAppId SubmitApplication with
+            appCustomer = alice
+            appAirline = airline
+            customerId = "123"
+            customerName = "Alice"
+            customerAddress = "123 Main St ABCD"
+            customerEmail = "alice@alice.io"
+            customerPhone = Some "01-555-555-1234"
+            timeStamp = now
+            customerDob = date 2000 Jan 05   
+
+    -- Airline reviews Alice's application
+    aliceCLPAccount <- submit airline do
+        exerciseCmd aliceCLPAppId ReviewApplication
+
+    -- ===
+    -- Bob creates a blank CLPApplication
+    bobCLPAppId <- submit bob do
+        createCmd CLPApplication with
+            customer = bob
+            airline
+            id = ""
+            name = ""
+            address = ""
+            email = ""
+            phone = Some ""
+            timestamp = now
+            dob = toDateUTC now
+
+    -- Bob submit the application with details
+    bobCLPAppId <- submit bob do
+        exerciseCmd bobCLPAppId SubmitApplication with
+            appCustomer = bob
+            appAirline = airline
+            customerId = "456"
+            customerName = "Bob"
+            customerAddress = "123 Spring St EFGH"
+            customerEmail = "bob@bob.io"
+            customerPhone = Some "02-111-222-1234"
+            timeStamp = now
+            customerDob = date 1990 Jan 05   
+
+    -- Airline reviews Bob's application
+    bobCLPAccount <- submit airline do
+        exerciseCmd bobCLPAppId ReviewApplication
+
+    alVisibleContracts <- query @CLPAccount airline
+
+    let firstInfo = head alVisibleContracts
+    newCid <- submit airline do
+        exerciseCmd firstInfo._1 AddPoints with ptsToAdd = 100
+
+    return ()
