@@ -88,3 +88,19 @@ template CLPAccount
 
         key (airline, id): (Party, Text)
         maintainer key._1
+
+        choice AddPoints: ContractId CLPAccount
+            with ptsToAdd: Int
+            controller airline
+            do
+                create this with 
+                    customer
+                    airline
+                    id
+                    name
+                    address
+                    email
+                    phone
+                    timestamp
+                    dob
+                    points = points + ptsToAdd
