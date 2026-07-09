@@ -3,6 +3,7 @@ module TestLab2 where
 import Lab2
 import Daml.Script
 import DA.Date (date, Month(Aug))
+import DA.Optional (fromSome)
 
 data CLPData = CLPData with
     customer1: Party
@@ -58,5 +59,37 @@ testUnhappyPath = do
             customerPhone = Some "1234-1234"
             timeStamp = now
             customerDob = date 2000 Aug 7
+
+    return ()
+
+-- test unhappy path
+testHappyPath: Script()
+testHappyPath = do
+    now <- getTime
+
+    clpData@CLPData{..} <- setupCLPData "Alice" "Bob" "Epic"
+
+    applCid <- submit customer1 do
+        exerciseCmd airlineServiceCid CreateBlankCLPApplication
+
+    applCid <- submit customer1 do
+        exerciseCmd applCid SubmitApplication with
+            appCustomer = customer1
+            appAirline = airline
+            customerId = "123"
+            customerName = "Alice"
+            customerAddress = "Alice road, Hong Kong"
+            customerEmail = "alice@alice.io"
+            customerPhone = Some "1234-1234"
+            timeStamp = now
+            customerDob = date 2000 Aug 7
+    
+    res <- submit airline do
+        exerciseCmd applCid ReviewApplication
+
+    let acctCid = fromSome res
+
+    submit airline do
+        exerciseCmd acctCid AddPoints with ptsToAdd = 100
 
     return ()
