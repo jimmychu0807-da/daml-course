@@ -5,6 +5,7 @@ import Lab2
 import DA.Date (toDateUTC, date, Month(Jan), Month(Mar), Month(Jul))
 import DA.Time (time)
 import DA.List as List
+import DA.Optional
 
 testActionsLoops = script do
     alice <- allocateParty "Alice"
@@ -70,8 +71,27 @@ testActionsLoops = script do
 
     allApplications <- query @CLPApplication airline
 
+    let allApplicationCids = map (\entry -> entry._1) allApplications
+    let allCustomerIds = map (\entry -> entry._2.id) allApplications
+    let allCidsAndIds = zip allApplicationCids allCustomerIds
     
-
     debug $ allApplications
+    debug $ allApplicationCids
+    debug $ allCidsAndIds
+
+    reviewResults <- mapA 
+        (\appInfo -> submit airline do exerciseCmd appInfo._1 ReviewApplication) 
+        allApplications
+
+    let allAccountCids = catOptionals reviewResults
+    
+    allAccountCids <- mapA 
+        (\acctCid -> submit airline do exerciseCmd acctCid AddPoints with ptsToAdd = 1000)
+        allAccountCids
+
+    allAccountTuples <- query @CLPAccount airline
+
+    debug $ allAccountCids
+    debug $ allAccountTuples
 
     return ()
