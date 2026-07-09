@@ -2,9 +2,8 @@ module TestLab3 where
 
 import Daml.Script
 import Lab2
-import DA.Date (toDateUTC, date, Month(Jan), Month(Mar), Month(Jul))
+import DA.Date (toDateUTC, date, Month(Jan), Month(Mar))
 import DA.Time (time)
-import DA.List as List
 import DA.Optional
 
 testActionsLoops = script do
