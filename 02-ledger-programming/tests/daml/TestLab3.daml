@@ -79,15 +79,14 @@ testActionsLoops = script do
     debug $ allApplicationCids
     debug $ allCidsAndIds
 
-    reviewResults <- mapA 
-        (\appInfo -> submit airline do exerciseCmd appInfo._1 ReviewApplication) 
-        allApplications
-
-    let allAccountCids = catOptionals reviewResults
+    -- Problem 2
+    reviewResults <- submit airline do 
+        mapA (`exerciseCmd` ReviewApplication) allApplicationCids
     
-    allAccountCids <- mapA 
-        (\acctCid -> submit airline do exerciseCmd acctCid AddPoints with ptsToAdd = 1000)
-        allAccountCids
+    allAccountCids <- submit airline do
+        mapA 
+            (\res -> exerciseCmd (fromSome res) AddPoints with ptsToAdd = 1000)
+            reviewResults
 
     allAccountTuples <- query @CLPAccount airline
 
