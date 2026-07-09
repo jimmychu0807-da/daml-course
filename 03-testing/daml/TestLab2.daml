@@ -1,0 +1,62 @@
+module TestLab2 where
+
+import Lab2
+import Daml.Script
+import DA.Date (date, Month(Aug))
+
+data CLPData = CLPData with
+    customer1: Party
+    customer2: Party
+    airline: Party
+    airlineServiceCid: ContractId AirlineService
+
+setupCLPData: Text -> Text -> Text -> Script CLPData
+setupCLPData cust1Name cust2Name airlineName = do 
+    customer1 <- allocateParty cust1Name
+    customer2 <- allocateParty cust2Name
+    airline <- allocateParty airlineName
+    airlineServiceCid <- submit airline do
+        createCmd AirlineService with
+            airline
+            customer = customer1
+
+    return CLPData with 
+        customer1 
+        customer2
+        airline
+        airlineServiceCid
+
+-- test script to print the test-data
+testScript1: Script ()
+testScript1 = do
+    clpData <- setupCLPData "Alice" "Bob" "Epic"
+    debug clpData.customer1
+    debug clpData.customer2
+    debug clpData.airline
+    debug clpData.airlineServiceCid
+
+    return()
+
+-- test unhappy path
+testUnhappyPath: Script()
+testUnhappyPath = do
+    now <- getTime
+
+    clpData@CLPData{customer1, customer2, airline, airlineServiceCid} <- setupCLPData "Alice" "Bob" "Epic"
+
+    applCid <- submit customer1 do
+        exerciseCmd airlineServiceCid CreateBlankCLPApplication
+
+    submitMustFail customer2 do
+        exerciseCmd applCid SubmitApplication with
+            appCustomer = customer2
+            appAirline = airline
+            customerId = "123"
+            customerName = "Bob"
+            customerAddress = "Bob road, Hong Kong"
+            customerEmail = "bob@bob.io"
+            customerPhone = Some "1234-1234"
+            timeStamp = now
+            customerDob = date 2000 Aug 7
+
+    return ()
