@@ -1,0 +1,133 @@
+module Lab2 where
+
+import DA.Date (Month(Jan), date)
+import DA.Time (time)
+
+template CLPApplication
+    with
+        customer: Party
+        airline: Party
+
+        -- fields in the template
+        id: Text
+        name: Text
+        address: Text
+        email: Text
+        phone: Optional Text
+        timestamp: Time
+        dob: Date
+
+    where
+        signatory customer
+        observer airline
+    
+        choice SubmitApplication: ContractId CLPApplication
+            with
+                appCustomer: Party
+                appAirline: Party
+                customerId: Text
+                customerName: Text
+                customerAddress: Text
+                customerEmail: Text
+                customerPhone: Optional Text
+                timeStamp: Time
+                customerDob: Date
+            controller customer
+            do 
+                create this with
+                    customer = appCustomer
+                    airline = appAirline
+                    id = customerId
+                    name = customerName
+                    address = customerAddress
+                    email = customerEmail
+                    phone = customerPhone
+                    timestamp = timeStamp
+                    dob = customerDob
+        
+        choice ReviewApplication: Optional(ContractId CLPAccount)
+            controller airline
+            do
+                -- from the contract cid, retrieve userId
+                -- form the key = (airline, id) and fetch @CLPAccount
+                -- if it is None, then createCmd to create contract and return Some ()
+                -- otherwise return None
+                let cKey = (airline, this.id)
+                acctInfo <- lookupByKey @CLPAccount cKey
+
+                case acctInfo of
+                    None -> do
+                        cid <- create CLPAccount with
+                            customer
+                            airline
+                            id
+                            name
+                            address
+                            email
+                            phone
+                            timestamp
+                            dob
+                            points = 0
+                        return (Some cid)
+                    Some _ -> return None
+
+template CLPAccount
+    with
+        customer: Party
+        airline: Party
+
+        -- fields in the template
+        id: Text
+        name: Text
+        address: Text
+        email: Text
+        phone: Optional Text
+        timestamp: Time
+        dob: Date
+        points: Int
+
+    where 
+        signatory customer, airline
+
+        key (airline, id): (Party, Text)
+        maintainer key._1
+
+        choice AddPoints: ContractId CLPAccount
+            with ptsToAdd: Int
+            controller airline
+            do
+                create this with 
+                    customer
+                    airline
+                    id
+                    name
+                    address
+                    email
+                    phone
+                    timestamp
+                    dob
+                    points = points + ptsToAdd
+
+template AirlineService
+    with
+        airline: Party
+        customer: Party
+    where
+        signatory airline
+        observer customer
+
+        choice CreateBlankCLPApplication: ContractId CLPApplication
+            controller customer
+            do
+                create CLPApplication with
+                    airline
+                    customer
+
+                    -- fields in the template
+                    id = ""
+                    name = ""
+                    address = ""
+                    email = ""
+                    phone = Some ""
+                    timestamp = time (date 1970 Jan 01) 00 00 00
+                    dob = date 1970 Jan 01
