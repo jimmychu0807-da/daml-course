@@ -1,0 +1,40 @@
+module TestSocialNetworkUser where
+
+import SocialNetworkUser
+import Daml.Script
+
+-- allocate parties
+data TestParties = TestParties with
+    alice: Party
+    bob: Party
+
+-- allocate parties
+setupParties = do
+    alice <- allocateParty "Alice"
+    bob <- allocateParty "Bob"
+    return TestParties with
+        alice
+        bob
+
+-- create contracts
+setupContracts: Party -> Script (ContractId SocialNetworkUser)
+setupContracts p = do
+    submit p do
+        createCmd SocialNetworkUser with 
+            username = p
+            following = []
+
+-- happy path, can follow
+canFollow = script do
+    testParties <- setupParties
+    testContract <- setupContracts testParties.alice
+    submit testParties.alice do
+        exerciseCmd testContract Follow with userToFollow = testParties.bob
+    return ()
+
+-- unhappy path, won't be able to follow
+cantFollowMyself = script do 
+    testParties@TestParties{..} <- setupParties
+    testContract <- setupContracts alice
+    submitMustFail alice do
+        exerciseCmd testContract Follow with userToFollow = alice

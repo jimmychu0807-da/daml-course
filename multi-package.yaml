@@ -4,4 +4,5 @@ packages:
 - ./01-functional-programming
 - ./02-ledger-programming/templates
 - ./02-ledger-programming/tests
+- ./03-testing
 - ./assignment/templates
