@@ -1,0 +1,32 @@
+module Bind where
+
+import Daml.Script
+
+safeDiv: Int -> Int -> Optional Int
+safeDiv _ 0 = None
+safeDiv x y = Some (x / y)
+
+reduce: Int -> Optional Int
+reduce x
+    | x <= 0 = None
+    | otherwise = Some (x - 1)
+
+bindingActions x y = do
+    z <- safeDiv x y
+    reduce z
+
+testAction = script do
+    let
+        a = safeDiv 4 2
+        b = safeDiv 4 0
+        c = safeDiv 4 2 >>= reduce
+        d = safeDiv 4 0 >>= reduce
+
+    debug a
+    debug b
+    debug c
+    debug d
+
+    debug $ bindingActions 4 0
+
+    return ()
