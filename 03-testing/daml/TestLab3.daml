@@ -1,0 +1,107 @@
+module TestLab3 where
+
+import Lab3
+import Daml.Script
+import DA.Date (date, Month(Aug))
+
+data CLPData = CLPData with
+    customer: Party
+    airline: Party
+    airlineServiceCid: ContractId AirlineService
+
+setupCLPData: Text -> Text -> Script CLPData
+setupCLPData t1 t2 = do 
+    customer <- allocateParty t1
+    airline <- allocateParty t2
+    airlineServiceCid <- submit airline do
+        createCmd AirlineService with
+            airline
+            customer
+
+    return CLPData with 
+        customer
+        airline
+        airlineServiceCid
+
+-- test script to print the test-data
+testScript1: Script ()
+testScript1 = do
+    clpData <- setupCLPData "Alice" "Epic"
+    now <- getTime
+
+    aliceApplicationCid <- submit clpData.customer do
+        exerciseCmd clpData.airlineServiceCid CreateBlankApplication
+    
+    aliceApplicationCid <- submit clpData.customer do
+        exerciseCmd aliceApplicationCid SubmitApplication with
+            appCustomer = clpData.customer
+            appAirline = clpData.airline
+            customerId = "1234" -- this is less than 3 chars which will cause the failure
+            customerName = "Alice"
+            customerAddress = "ABC Main St, NY"
+            customerEmail = "alice@alice.io"
+            customerPhone = Some "1231-2312"
+            timeStamp = now
+            customerDob = date 2000 Aug 10
+    
+    aliceAccountCid <- submit clpData.airline do
+        exerciseCmd aliceApplicationCid ReviewApplication
+
+    return()
+
+testScript2 = do
+    customer1 <- allocateParty "Alice"
+    customer2 <- allocateParty "Bob"
+    airline <- allocateParty  "Epic"
+
+    airlineServiceCid <- submit airline do
+        createCmd AirlineService with
+            customer = customer1
+            airline
+
+    now <- getTime
+
+    aliceApplCid <- submit customer1 do 
+        exerciseCmd airlineServiceCid CreateBlankApplication 
+
+    aliceApplicationCid <- submit customer1 do 
+        exerciseCmd aliceApplCid SubmitApplication 
+            with 
+                appCustomer = customer1 
+                appAirline = airline
+                customerId = "1234"
+                customerName = "Alice"
+                customerAddress = "ABC Main Street, NY"
+                customerEmail = "alice@wonderland.io"
+                customerPhone = Some "123-555-1234"
+                timeStamp = now 
+                customerDob = date 2000 Aug 10
+
+    aliceAccountCid <- submit airline do 
+        exerciseCmd aliceApplicationCid ReviewApplication 
+
+    airlineServiceCid <- submit airline do 
+        createCmd AirlineService with 
+            customer = customer2
+            airline
+
+    bobApplicationCid <- submit customer2 do 
+        exerciseCmd airlineServiceCid CreateBlankApplication 
+
+    bobApplicationCid <- submit customer2 do 
+        exerciseCmd bobApplicationCid SubmitApplication 
+            with 
+                appCustomer = customer2 
+                appAirline = airline
+                customerId = "1234"
+                customerName = "Bob"
+                customerAddress = "XYZC Main Street, NY"
+                customerEmail = "bob@nomansland.io"
+                customerPhone = Some "123-555-5678"
+                timeStamp = now 
+                customerDob = date 2000 Aug 10
+
+    bobAccountCid <- submit airline do 
+        exerciseCmd bobApplicationCid ReviewApplication 
+
+    return()

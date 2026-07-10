@@ -6,9 +6,13 @@ template SocialNetworkUser
     with
         username: Party
         following: [Party]
+        alias: Text
+
     where
         signatory username
         observer following
+
+        ensure alias /= ""
 
         choice Follow: ContractId SocialNetworkUser
             with
@@ -17,9 +21,10 @@ template SocialNetworkUser
             do
                 assertMsg "You cannot follow yourself" (userToFollow /= username)
                 assertMsg "You cannot follow the same user twice" (userToFollow `notElem` following)
-                create this with
+                
+                trace "Adding a new follower" (create this with
                     username
-                    following = userToFollow :: following
+                    following = userToFollow :: following)
 
 test = script do
     alice <- allocateParty "Alice"
@@ -29,11 +34,13 @@ test = script do
         createCmd SocialNetworkUser with
             username = alice
             following = []
+            alias = "Alice"
     
     submit bob do
         createCmd SocialNetworkUser with
             username = bob
             following = []
+            alias = "Bob"
     
     newAliceCid <- submit alice do
         exerciseCmd aliceCid Follow with userToFollow = bob
