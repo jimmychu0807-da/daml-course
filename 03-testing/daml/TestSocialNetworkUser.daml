@@ -23,6 +23,7 @@ setupContracts p = do
         createCmd SocialNetworkUser with 
             username = p
             following = []
+            alias = "myAlias"
 
 -- happy path, can follow
 canFollow = script do
