@@ -1,0 +1,345 @@
+module Exam where
+
+import DA.Time
+import DA.Date
+import Daml.Script
+import DA.Optional
+
+isPrime: Int -> Either [Int] Text
+isPrime n = do
+    let divisors = filter (\x -> n % x == 0) [2..n-1]
+    if (n < 2 || not (null divisors))
+        then Left divisors
+        else Right "Prime"
+
+factorial: Int -> Int
+factorial num =
+    if (num < 2) then 1
+    else num * factorial(num - 1)
+
+averageNum: [Int] -> Decimal
+averageNum li = do
+    let
+        len = intToDecimal (length li)
+        sumTotal = intToDecimal (foldl (\acc y -> acc + y) 0 li)
+
+    sumTotal / len
+      
+testScript1 = script do
+    debug $ isPrime 10
+    debug $ isPrime 31
+
+    debug $ factorial 6
+    debug $ averageNum [2,4,6,8,10]
+    return ()
+
+data PatientInfo = PatientInfo with
+    fullName: Text
+    dateOfBirth: Date
+    gender: Text
+    hasInsurance: Bool
+    insuranceInfo: Optional Text
+    patientAddress: Text
+    pharmacyAddress: Text
+        deriving (Show,Eq,Ord)
+
+class Duration a b c where
+    getAge: a -> b -> c
+
+instance Duration PatientInfo Date Int where
+    getAge patientInfo appointmentDate =
+        let
+            timeOfBirth: Time
+            timeOfBirth = time patientInfo.dateOfBirth 00 00 00
+
+            appointmentTime: Time
+            appointmentTime = time appointmentDate 00 00 00
+
+            patientAge: Int
+            patientAge = wholeDays (subTime appointmentTime timeOfBirth) / 365
+        in
+            patientAge
+
+template AppointmentRequest
+    with
+        patient: Party
+        patientInfo: PatientInfo
+        clinic: Party
+        doctor: Party
+        appointmentDate: Date
+        appointmentTime: Time
+        note: Optional Text
+    where
+        signatory patient
+        observer clinic
+    
+        ensure patientInfo.fullName /= "" && patientInfo.patientAddress /= ""
+
+        choice UpdateAppointmentRequest: ContractId AppointmentRequest
+            with
+                newInfo: PatientInfo
+                newDate: Date
+                newTime: Time
+            controller patient
+            do
+                create this with
+                    patientInfo = newInfo
+                    appointmentDate = newDate
+                    appointmentTime = newTime
+                  
+        nonconsuming choice AcceptAppointmentRequest: ContractId Appointment
+            controller clinic 
+            do
+                appointment <- lookupByKey @Appointment (patient, appointmentDate)
+                assertMsg "Please choose a different appointment date." (isNone appointment)
+                archive self
+                create Appointment with
+                    patientAge = getAge patientInfo appointmentDate
+                    complete = False
+                    patient
+                    patientInfo
+                    clinic
+                    doctor
+                    appointmentDate
+                    appointmentTime
+                    note
+
+template Appointment
+    with
+        patient: Party
+        patientInfo: PatientInfo
+        patientAge: Int
+        clinic: Party
+        doctor: Party
+        appointmentDate: Date
+        appointmentTime: Time
+        complete: Bool
+        note: Optional Text
+    where
+        signatory patient, clinic
+        observer doctor
+
+        key (patient, appointmentDate): (Party, Date)
+        maintainer key._1
+    
+        nonconsuming choice ReviewRecords: [Text]
+            with
+                records: [(ContractId MedicalRecord, MedicalRecord)] 
+            controller doctor
+            do
+                if null records then return ["N/A"] 
+                else do
+                    return $ map (\rec -> 
+                         "Name: " <> rec._2.patientName <> 
+                         " | DOB: " <> show(rec._2.patientDOB) <> 
+                         " | Appointment Date: " <> show(rec._2.appointmentDate)<> 
+                         " | Complete: " <> show(rec._2.complete)<> 
+                         " | Note: " <> rec._2.note) records         
+
+        nonconsuming choice CheckAppointment: Either Text Appointment
+            with
+                dateToCheck: Date 
+            controller doctor
+            do
+                appointment <- lookupByKey @Appointment (patient, dateToCheck)
+                case appointment of
+                    None -> do
+                        pure (Left "No appointment scheduled.") 
+                    Some appointmentId -> do 
+                        appointmentData <- fetch appointmentId 
+                        pure (Right appointmentData) 
+
+        choice CompleteAppointment: ContractId MedicalRecord
+            with
+                executed: Bool
+                feedback: Text
+            controller doctor
+            do
+                create MedicalRecord
+                    with
+                        patient
+                        patientName = patientInfo.fullName
+                        patientDOB = patientInfo.dateOfBirth
+                        clinic
+                        doctor
+                        appointmentDate
+                        complete = executed
+                        note = feedback
+
+
+template MedicalRecord
+    with
+        patient: Party
+        patientName: Text
+        patientDOB: Date
+        clinic: Party
+        doctor: Party
+        appointmentDate: Date
+        complete: Bool
+        note: Text
+    where
+        signatory clinic, doctor
+        observer patient
+
+data TestParties = TestParties with
+    clinic: Party 
+    doctor: Party
+    alice: Party
+    bob: Party
+
+setupTestParties = do
+    clinic <- allocateParty "Clinic"
+    doctor <- allocateParty "Doctor"
+    alice <- allocateParty "Alice"
+    bob <- allocateParty "Bob"
+
+    return TestParties with
+        clinic
+        doctor
+        alice
+        bob
+
+data TestPatientInfos = TestPatientInfos with
+    patientInfo1: PatientInfo
+    patientInfo2: PatientInfo
+
+setupPatientInfos = do
+    testParties@TestParties{..} <- setupTestParties 
+
+    let
+        patientInfo1 = PatientInfo with
+            fullName = "Alice DA"
+            dateOfBirth = date 1980 Jan 01
+            gender = "F"
+            hasInsurance = True
+            insuranceInfo = Some "Alice DA Insurance Info"
+            patientAddress = "Alice DA Address"
+            pharmacyAddress = "Alice DA Pharmacy Address"
+
+        patientInfo2 = PatientInfo with
+            fullName = "Bob DA"
+            dateOfBirth = date 1985 Feb 02
+            gender = "M"
+            hasInsurance = False
+            insuranceInfo = None
+            patientAddress = "Bob DA Address"
+            pharmacyAddress = "Bob DA Pharmacy Address"
+
+    pure (testParties, TestPatientInfos with {patientInfo1, patientInfo2})  
+
+setupMedicalRecords = do
+    (testParties@TestParties{..}, testPatientInfos@TestPatientInfos{..}) <- setupPatientInfos
+
+    medrecCid1 <- submitMulti [clinic, doctor] [] do 
+        createCmd MedicalRecord with
+            patient = alice
+            patientName = "Alice DA"
+            patientDOB = date 1980 Jan 01
+            clinic
+            doctor
+            appointmentDate = date 2023 Jun 05
+            complete = True
+            note = "Alice Medical Record 1"
+
+    medrecCid2 <- submitMulti [clinic, doctor] [] do  
+        createCmd MedicalRecord with
+            patient = alice
+            patientName = "Alice DA"
+            patientDOB = date 1980 Jan 01
+            clinic
+            doctor
+            appointmentDate = date 2023 Jul 05
+            complete = True
+            note = "Alice Medical Record 2"
+
+    pure (testParties, testPatientInfos, medrecCid1, medrecCid2)
+
+setupUsers = do
+    (testParties@TestParties{..}) <- setupTestParties
+
+    clinicId <- validateUserId "Clnc"   
+    drId <- validateUserId "Dr" 
+    aliceId <- validateUserId "Alice" 
+    bobId  <- validateUserId "Bob" 
+    
+    createUser (User clinicId (Some clinic)) [CanActAs clinic]     
+    createUser (User drId (Some doctor)) [CanActAs doctor]
+    createUser (User aliceId (Some alice)) [CanActAs alice] 
+    createUser (User bobId (Some bob)) [CanActAs bob]
+
+testCreateUpdateAppointmentRequest : Script (TestParties, TestPatientInfos, ContractId MedicalRecord, ContractId MedicalRecord, ContractId AppointmentRequest)
+testCreateUpdateAppointmentRequest = script do
+    (testParties@TestParties{..}, testPatientInfos@TestPatientInfos{..}, medrecCid1, medrecCid2) <- setupMedicalRecords
+    
+    newReqCid <- submit alice do 
+        createCmd AppointmentRequest with 
+            patient = alice
+            patientInfo = patientInfo1
+            clinic
+            doctor
+            appointmentDate = date 2024 Mar 05
+            appointmentTime = time (date 2024 Mar 05) 10 00 00
+            note = None
+
+    updatedReqCid <- submit alice do 
+        exerciseCmd newReqCid UpdateAppointmentRequest with 
+            newInfo = patientInfo1
+            newDate = date 2024 Mar 10
+            newTime = time (date 2024 Mar 10) 10 00 00
+
+    pure (testParties, testPatientInfos, medrecCid1, medrecCid2, updatedReqCid)
+
+testAcceptAppointmentRequest = script do
+    (testParties@TestParties{..}, testPatientInfos@TestPatientInfos{..}, medrecCid1, medrecCid2, updatedReqCid) <- testCreateUpdateAppointmentRequest 
+    
+    newAppCid <- submit clinic do 
+        exerciseCmd updatedReqCid AcceptAppointmentRequest 
+
+    pure (testParties, testPatientInfos, medrecCid1, medrecCid2, newAppCid)
+
+testReviewCheckCompleteAppointment = script do
+    (testParties@TestParties{..}, testPatientInfos@TestPatientInfos{..}, medrecCid1, medrecCid2, newAppCid) <- testAcceptAppointmentRequest 
+    
+    medRecords <- query @MedicalRecord alice
+ 
+    submit doctor do 
+        exerciseCmd newAppCid ReviewRecords with  
+            records = medRecords
+    
+    submit doctor do
+        exerciseCmd newAppCid CheckAppointment with  
+            dateToCheck = date 2024 Oct 10
+
+    submit doctor do 
+        exerciseCmd newAppCid CompleteAppointment with  
+            executed = True
+            feedback = "N/A"
+
+cantCreateAppointmentWrongDate = script do
+    (testParties@TestParties{..}, testPatientInfos@TestPatientInfos{..}, medrecCid1, medrecCid2, newAppCid) <- testAcceptAppointmentRequest
+    
+    submitMulti [alice, clinic] [] do 
+        createCmd Appointment with 
+            patient = alice
+            patientInfo = patientInfo1
+            patientAge = 44
+            clinic
+            doctor
+            appointmentDate = date 2024 Mar 10
+            appointmentTime = time (date 2024 Mar 10) 10 00 00 
+            complete = False
+            note = None
+
+cantCreateMedicalRecordAlone = script do
+    (testParties@TestParties{clinic, doctor, alice}, testPatientInfos@TestPatientInfos{..}, medrecCid1, medrecCid2) <- setupMedicalRecords
+    
+    submitMustFail clinic do 
+        createCmd MedicalRecord with 
+            patient = alice
+            patientName = "Alice"
+            patientDOB = date 1980 Jan 01
+            clinic
+            doctor
+            appointmentDate = date 2024 Mar 15
+            complete = True
+            note = "Created by the clinic party alone."

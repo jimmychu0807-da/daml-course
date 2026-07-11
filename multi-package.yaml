@@ -6,3 +6,4 @@ packages:
 - ./02-ledger-programming/tests
 - ./03-testing
 - ./assignment/templates
+- ./fundamental-exam
