@@ -105,3 +105,15 @@ testScript2 = do
         exerciseCmd bobApplicationCid ReviewApplication 
 
     return()
+
+isPrime: Int -> Either [Int] Text
+isPrime n = do
+    let divisors = filter (\x -> n % x == 0) [2..n-1]
+    if (n < 2 || not (null divisors))
+        then Left divisors
+        else Right "Prime"
+
+testScript3 = script do
+    debug $ isPrime(10)
+    debug $ isPrime(31)
+    return ()
