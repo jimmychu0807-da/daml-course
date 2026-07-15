@@ -10,7 +10,7 @@ data CLPData = CLPData with
     airlineServiceCid: ContractId AirlineService
 
 setupCLPData: Text -> Text -> Script CLPData
-setupCLPData t1 t2 = do 
+setupCLPData t1 t2 = do
     customer <- allocateParty t1
     airline <- allocateParty t2
     airlineServiceCid <- submit airline do
@@ -18,7 +18,7 @@ setupCLPData t1 t2 = do
             airline
             customer
 
-    return CLPData with 
+    return CLPData with
         customer
         airline
         airlineServiceCid
@@ -31,7 +31,7 @@ testScript1 = do
 
     aliceApplicationCid <- submit clpData.customer do
         exerciseCmd clpData.airlineServiceCid CreateBlankApplication
-    
+
     aliceApplicationCid <- submit clpData.customer do
         exerciseCmd aliceApplicationCid SubmitApplication with
             appCustomer = clpData.customer
@@ -43,7 +43,7 @@ testScript1 = do
             customerPhone = Some "1231-2312"
             timeStamp = now
             customerDob = date 2000 Aug 10
-    
+
     aliceAccountCid <- submit clpData.airline do
         exerciseCmd aliceApplicationCid ReviewApplication
 
@@ -61,48 +61,48 @@ testScript2 = do
 
     now <- getTime
 
-    aliceApplCid <- submit customer1 do 
-        exerciseCmd airlineServiceCid CreateBlankApplication 
+    aliceApplCid <- submit customer1 do
+        exerciseCmd airlineServiceCid CreateBlankApplication
 
-    aliceApplicationCid <- submit customer1 do 
-        exerciseCmd aliceApplCid SubmitApplication 
-            with 
-                appCustomer = customer1 
+    aliceApplicationCid <- submit customer1 do
+        exerciseCmd aliceApplCid SubmitApplication
+            with
+                appCustomer = customer1
                 appAirline = airline
                 customerId = "1234"
                 customerName = "Alice"
                 customerAddress = "ABC Main Street, NY"
                 customerEmail = "alice@wonderland.io"
                 customerPhone = Some "123-555-1234"
-                timeStamp = now 
+                timeStamp = now
                 customerDob = date 2000 Aug 10
 
-    aliceAccountCid <- submit airline do 
-        exerciseCmd aliceApplicationCid ReviewApplication 
+    aliceAccountCid <- submit airline do
+        exerciseCmd aliceApplicationCid ReviewApplication
 
-    airlineServiceCid <- submit airline do 
-        createCmd AirlineService with 
+    airlineServiceCid <- submit airline do
+        createCmd AirlineService with
             customer = customer2
             airline
 
-    bobApplicationCid <- submit customer2 do 
-        exerciseCmd airlineServiceCid CreateBlankApplication 
+    bobApplicationCid <- submit customer2 do
+        exerciseCmd airlineServiceCid CreateBlankApplication
 
-    bobApplicationCid <- submit customer2 do 
-        exerciseCmd bobApplicationCid SubmitApplication 
-            with 
-                appCustomer = customer2 
+    bobApplicationCid <- submit customer2 do
+        exerciseCmd bobApplicationCid SubmitApplication
+            with
+                appCustomer = customer2
                 appAirline = airline
                 customerId = "1234"
                 customerName = "Bob"
                 customerAddress = "XYZC Main Street, NY"
                 customerEmail = "bob@nomansland.io"
                 customerPhone = Some "123-555-5678"
-                timeStamp = now 
+                timeStamp = now
                 customerDob = date 2000 Aug 10
 
-    bobAccountCid <- submit airline do 
-        exerciseCmd bobApplicationCid ReviewApplication 
+    bobAccountCid <- submit airline do
+        exerciseCmd bobApplicationCid ReviewApplication
 
     return()
 
