@@ -1,0 +1,119 @@
+module Script01 where
+
+import Daml.Script
+import DA.Action
+import DA.Assert
+import DA.List
+
+increment: Int -> Int
+increment n = n + 1
+
+add n m = n + m
+
+increment2 = add 1
+
+-- can use infix data type
+three = 1 `add` 2
+
+add2: Additive a => a -> a -> a
+add2 = (+)
+
+increment3 = (1 +)
+double = (* 2)
+
+script01 = script do
+  debug $ increment3 3
+  debug $ double 3
+
+  return()
+
+uncurry: (a -> b -> c) -> (a, b) -> c
+
+uncurry1 f t = f t._1 t._2
+uncurry2 f t = case t of
+  (x, y) -> f x y
+
+uncurry f (x, y) = f x y
+
+fromSome: Optional a -> a
+fromSome x = case x of
+  Some val -> val
+  None -> error("no value")
+
+boolToInt b = if b
+  then 1
+  else 0
+
+template T
+  with
+    p: Party
+  where
+    signatory p
+
+template S
+  with
+    p: Party
+  where
+    signatory p
+
+ifThenSElseT1 b p = if b
+  then do
+    cid <- create S with p
+    return (Left cid)
+  else do
+    cid <- create T with p
+    return (Right cid)
+
+ifThenSElseT3 b p = if b
+  then void(create S with p)
+  else void(create T with p)
+
+sum ints = foldl (\acc v -> acc + v) 0 ints
+
+script02 = script do
+  debug $ Script01.sum [1, 2, 3, 4, 5]
+  return ()
+
+tuple_test = script do
+  let
+    my_coordinate = (1.0: Decimal, 2.0: Decimal, 3.0: Decimal)
+
+  assertEq my_coordinate._1 1.0
+  return ()
+
+list_test = script do
+  let
+    empty: [Int] = []
+    one = [1]
+    many = [3, 4, 5]
+
+  assert (head one == 1)
+  assert (tail one == empty)
+
+  -- `++` concatenate lists
+  debug $ one ++ many
+
+data EqRecord = EqRecord
+  with
+    my_txt: Text
+    my_int: Int
+    my_dec: Decimal
+  deriving (Eq, Show, Ord)
+
+eq_test = script do
+  let
+    eq_rec = EqRecord with
+      my_txt = "abc"
+      my_int = 3
+      my_dec = 5.0
+
+  debug $ eq_rec
+  return()
+
+data Location
+  = Inhand
+  | InAccount
+  | Underground
+  | InSafe
+  deriving (Eq, Show)
+

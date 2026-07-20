@@ -77,3 +77,18 @@ mapTest = script do
     debug(Map.lookup "c" wordMap)
 
     return ()
+
+fromSome: Optional a -> a
+fromSome p = case p of
+    Some(v) -> v
+    _ -> error("No valaue")
+
+doError t = case t of
+    "True" -> True
+    "False" -> False
+    _ -> error("not a bool:" <> t)
+
+intOrText: Bool -> Either Int Text
+intOrText b = if b
+    then Left 1
+    else Right "a"

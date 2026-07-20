@@ -7,3 +7,6 @@ packages:
 - ./03-testing
 - ./assignment/templates
 - ./fundamental-exam
+- ./playground
+- ./intro-functional-101
+- ./intro-data
