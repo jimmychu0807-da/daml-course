@@ -1,0 +1,26 @@
+module DelegationPattern where
+
+import DA.Optional (fromOptional)
+
+template Asset
+  with
+    owner: Party
+    delegate: Optional Party
+  where
+    signatory owner
+
+    choice Transfer: ContractId Asset
+      with
+        newOwner: Party
+      controller fromOptional owner delegate
+      do
+        create this with
+          owner = newOwner
+
+    choice SetDelegate: ContractId Asset
+      with
+        newDelegate: Party
+      controller owner
+      do
+        create this with
+          delegate = Some newDelegate

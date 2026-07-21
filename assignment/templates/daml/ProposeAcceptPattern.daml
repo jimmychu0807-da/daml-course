@@ -2,35 +2,36 @@ module ProposeAcceptPattern where
 
 -- Step 1: Alice creates a proposal
 template TradeProposal
-    with
-        proposer: Party
-        counterparty: Party
-        asset: Text
-        price: Decimal
-    
-    where
-        signatory proposer
-        observer counterparty
+  with
+    proposer: Party
+    counterparty: Party
+    asset: Text
+    price: Decimal
 
-        choice Accept: ContractId Trade
-            controller counterparty
-            do
-                create Trade with
-                    buyer = counterparty
-                    seller = proposer
-                    asset
-                    price
-        
-        choice Withdraw: ()
-            controller proposer
-            do pure()
+  where
+    signatory proposer
+    observer counterparty
+
+    choice Accept: ContractId Trade
+      controller counterparty
+      do
+        create Trade with
+          buyer = counterparty
+          seller = proposer
+          ..
+
+    choice Withdraw: ()
+      controller proposer
+      do
+        -- how is `pure()` different from `return ()`
+        pure ()
 
 -- Step 2: Acceptance creates the multi-party contract
 template Trade
-    with
-        buyer: Party
-        seller: Party
-        asset: Text
-        price: Decimal
-    where
-        signatory buyer, seller
+  with
+    buyer: Party
+    seller: Party
+    asset: Text
+    price: Decimal
+  where
+    signatory buyer, seller
