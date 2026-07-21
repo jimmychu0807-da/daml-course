@@ -91,3 +91,7 @@ Then you can upload the dar into `app-user` (connects with 2xxx ports) and `app-
 ```
 `app-user`.dars.upload("./assignment/templates/.daml/dist/assignment-templates-0.0.1.dar")
 ```
+
+## Hands-on - Execute a daml transaction between two nodes - app user and app-provider
+
+

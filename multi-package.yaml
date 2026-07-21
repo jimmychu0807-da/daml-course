@@ -6,6 +6,7 @@ packages:
 - ./02-ledger-programming/tests
 - ./03-testing
 - ./assignment/templates
+- ./assignment/multi-participant
 - ./fundamental-exam
 - ./playground
 - ./intro-functional-101

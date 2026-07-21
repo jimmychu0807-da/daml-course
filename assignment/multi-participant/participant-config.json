@@ -1,0 +1,26 @@
+{
+  "default_participant": null,
+  "participants": {
+    "app-provider": {
+      "host": "localhost",
+      "port": 3901
+    },
+    "sv": {
+      "host": "localhost",
+      "port": 4901
+    },
+    "app-user": {
+      "host": "localhost",
+      "port": 2901
+    }
+  },
+  "party_participants": {
+    "app_provider_localnet-localparty-1::1220e52eff76ff40038c3f21c9e39ae7b636934771cd3c5b21db021bb46007a1f303": "app-provider",
+    "sv::12209c5dfe29b3c84605b01e0ccb94d4c0231c2fc3cb5f46cc0d24dbeea11c0de7dd": "sv",
+    "participant::12207130c9b5a3a85d09a37440ca445b81f1165c467408d96f7af85978297f240366": "app-user",
+    "Alice::12207130c9b5a3a85d09a37440ca445b81f1165c467408d96f7af85978297f240366": "app-user",
+    "DSO::12207c4a127f05ddf8265eebaa6da3cb0f11205848d58b85e8c2c97c135fa64fd306": "sv",
+    "app_user_localnet-localparty-1::12207130c9b5a3a85d09a37440ca445b81f1165c467408d96f7af85978297f240366": "app-user",
+    "participant::1220e52eff76ff40038c3f21c9e39ae7b636934771cd3c5b21db021bb46007a1f303": "app-provider"
+  }
+}
