@@ -2,7 +2,7 @@ module SocialNetworkUser where
 
 import Daml.Script
 
-template SocialNetworkUser 
+template SocialNetworkUser
     with
         username: Party
         following: [Party]
@@ -21,7 +21,7 @@ template SocialNetworkUser
             do
                 assertMsg "You cannot follow yourself" (userToFollow /= username)
                 assertMsg "You cannot follow the same user twice" (userToFollow `notElem` following)
-                
+
                 trace "Adding a new follower" (create this with
                     username
                     following = userToFollow :: following)
@@ -35,13 +35,13 @@ test = script do
             username = alice
             following = []
             alias = "Alice"
-    
+
     submit bob do
         createCmd SocialNetworkUser with
             username = bob
             following = []
             alias = "Bob"
-    
+
     newAliceCid <- submit alice do
         exerciseCmd aliceCid Follow with userToFollow = bob
 
@@ -55,4 +55,4 @@ test = script do
     submitMustFail alice do
         exerciseCmd newAliceCid $ Follow bob
 
-    return()    
+    return()

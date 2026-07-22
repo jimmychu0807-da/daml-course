@@ -6,40 +6,40 @@ import ProposeAcceptPattern
 -- alice create a contract
 -- bob accepts
 testCreateAndAccept = script do
-    alice <- allocateParty "Alice"
-    bob <- allocateParty "Bob"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
 
-    -- alice create a contract
-    tradeProposalId <- submit alice do
-        createCmd TradeProposal with
-            proposer = alice
-            counterparty = bob
-            asset = "Bitcoin"
-            price = 62000.00
-    
-    -- bob accepts
-    tradeId <- submit bob do
-        exerciseCmd tradeProposalId Accept
+  -- alice create a contract
+  tradeProposalId <- submit alice do
+    createCmd TradeProposal with
+      proposer = alice
+      counterparty = bob
+      asset = "Bitcoin"
+      price = 62000.00
 
-    return()
+  -- bob accepts
+  tradeId <- submit bob do
+    exerciseCmd tradeProposalId Accept
+
+  return()
 
 -- alice create a contract
 -- alice withdraws
 testCreateAndWithdraw : Script ()
 testCreateAndWithdraw = script do
-    alice <- allocateParty "Alice"
-    bob <- allocateParty "Bob"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
 
-    -- alice create a contract
-    tradeProposalId <- submit alice do
-        createCmd TradeProposal with
-            proposer = alice
-            counterparty = bob
-            asset = "Bitcoin"
-            price = 62000.00
+  -- alice create a contract
+  tradeProposalId <- submit alice do
+    createCmd TradeProposal with
+      proposer = alice
+      counterparty = bob
+      asset = "Bitcoin"
+      price = 62000.00
 
-    -- alice withdraws
-    submit alice do
-        exerciseCmd tradeProposalId Withdraw
-    
-    return()
+  -- alice withdraws
+  submit alice do
+    exerciseCmd tradeProposalId Withdraw
+
+  return()
