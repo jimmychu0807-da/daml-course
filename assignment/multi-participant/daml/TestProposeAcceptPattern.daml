@@ -14,10 +14,12 @@ multiParticipantScript = script do
       delay = milliseconds 200
 
   alice <- findOrAllocatePartyOn "Alice" (ParticipantName "app-user")
-  debug $ show alice
-
   bob <- findOrAllocatePartyOn "Bob" (ParticipantName "app-provider")
-  debug $ show bob
+
+  -- Need the following `grantUserRightOn` to the user whom I authenticated using the jwt token in participant config.
+  ledgerApiUser <- validateUserId "ledger-api-user"
+  _ <- grantUserRightsOn ledgerApiUser [CanActAs alice] (ParticipantName "app-user")
+  _ <- grantUserRightsOn ledgerApiUser [CanActAs bob] (ParticipantName "app-provider")
 
   debug "Alice submits a proposal..."
   proposalCid <- submit alice do
@@ -27,7 +29,7 @@ multiParticipantScript = script do
       asset = "Bitcoin"
       price = 600000.00
 
-  debug "Bob accept the proposal..."
+  debug "Bob accepts the proposal..."
   acceptedProposalCid <- submitAfterPollingForCid bob proposalCid retries do
     exerciseCmd proposalCid Accept
 
