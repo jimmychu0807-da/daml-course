@@ -5,6 +5,9 @@ import DA.Optional (mapOptional)
 import DA.Text (isPrefixOf)
 import DA.Time (RelTime)
 
+-- This file mainly comes from:
+--   https://github.com/wallacekelly-da/daml-public-demos/blob/daml-script-participant-config/daml/Helpers.daml
+
 data FindPartyResult
   = Found Party
   | NotFound
@@ -17,9 +20,10 @@ data Retries = Retries with
 findPartyOn: Text -> ParticipantName -> Script FindPartyResult
 findPartyOn displayName participant = do
   knownParties: [PartyDetails] <- listKnownPartiesOn participant
+
   let
     rolePartyOptional detail =
-      if (displayName <>"::") `isPrefixOf` (show detail.party)
+      if ("'" <> displayName <> "-") `DA.Text.isPrefixOf` (show detail.party)
       then Some detail.party
       else None
 
@@ -38,3 +42,23 @@ findOrAllocatePartyOn displayName participant = do
     NotFound -> do
       debug $ "Allocating party " <> displayName <> " on " <> (participantName participant)
       allocatePartyOn displayName participant
+
+pollForCid: (Template t, HasEnsure t) => Party -> ContractId t -> Retries -> Script ()
+pollForCid p cid retries = do
+  r <- queryContractId p cid
+  case r of
+    Some _ -> pure ()
+    None ->
+      if retries.remaining <= 0
+      then do
+        debug "cid could not be queried."
+        pure()
+      else do
+        debug $ "Waiting for a cid (" <> show retries.remaining <> " retries)..."
+        sleep retries.delay
+        pollForCid p cid $ retries with remaining = retries.remaining - 1
+
+submitAfterPollingForCid: (Template t, HasEnsure t) => Party -> ContractId t -> Retries -> Commands a -> Script a
+submitAfterPollingForCid p cid retries cmds = do
+  _ <- pollForCid p cid retries
+  submit p cmds
