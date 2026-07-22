@@ -1,0 +1,34 @@
+module TestProposeAcceptPattern where
+
+import ProposeAcceptPattern
+import Helpers
+import DA.Time (milliseconds)
+
+import Daml.Script
+
+multiParticipantScript: Script ()
+multiParticipantScript = script do
+  let
+    retries: Retries = Retries with
+      remaining = 5
+      delay = milliseconds 200
+
+  alice <- findOrAllocatePartyOn "Alice" (ParticipantName "app-user")
+  debug $ show alice
+
+  bob <- findOrAllocatePartyOn "Bob" (ParticipantName "app-provider")
+  debug $ show bob
+
+  debug "Alice submits a proposal..."
+  proposalCid <- submit alice do
+    createCmd TradeProposal with
+      proposer = alice
+      counterparty = bob
+      asset = "Bitcoin"
+      price = 600000.00
+
+  debug "Bob accept the proposal..."
+  acceptedProposalCid <- submitAfterPollingForCid bob proposalCid retries do
+    exerciseCmd proposalCid Accept
+
+  return ()
