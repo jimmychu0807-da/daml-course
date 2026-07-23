@@ -109,3 +109,29 @@ During testing with localnet, I just stop and start the localnet to upload the d
 In real-world Daml project, when the testnet is deployed across multiple orgs, they cannot be stop and start at one's will, so one have to increment the dar version during the test iteration so the project code can be accepted.
 
 Also, currently I have hard-coded the ledger user jwt tokens in the participant-config file. In real-world, one would need to query an IAM server to get the necessary user credential to query and submit commands to the testnet.
+
+# Canton Transaction Basics
+
+## Theory - review our documentation on [API user rights](https://docs.digitalasset.com/build/3.4/sdlc-howtos/applications/secure/authorization.html#access-tokens-and-rights)
+
+It use OAuth 2.0 and the access token is issued in the form of jwt.
+
+Encoding signature:
+
+```
+{
+  "alg": "RS256",
+  "typ": "JWT"
+}
+```
+Audience-based tokens
+
+```
+{
+   "aud": "https://daml.com/jwt/aud/participant/someParticipantId",
+   "sub": "someUserId",
+   "iss": "someIdpId",
+   "exp": 1300819380
+}
+```
+The `aud` and `sub` fields are the required fields. The rest are optional.
