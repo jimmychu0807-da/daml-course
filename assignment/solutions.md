@@ -110,9 +110,7 @@ In real-world Daml project, when the testnet is deployed across multiple orgs, t
 
 Also, currently I have hard-coded the ledger user jwt tokens in the participant-config file. In real-world, one would need to query an IAM server to get the necessary user credential to query and submit commands to the testnet.
 
-# Canton Transaction Basics
-
-# Focus: Learn about Canton Transaction Processing and How it Implements Privacy
+# Canton Transaction Basics. Focus: Learn about Canton Transaction Processing and How it Implements Privacy
 
 ## Theory - review our documentation on [API user rights](https://docs.digitalasset.com/build/3.4/sdlc-howtos/applications/secure/authorization.html#access-tokens-and-rights)
 
@@ -252,9 +250,9 @@ template AuditTradeTrail
     observer auditor
 ```
 
-The first way is more direct and less complex in the transaction view generation, and later retrieval.
+The first way is more direct and less complex in the transaction view generation.
 
-The second way is more complex but offer more flexibility. For instance we can anonymize certain information or add extra notes when generating an AuditTradeTrail based on a trade.
+The second way is more complex but offer more flexibility. For instance we can anonymize certain information or add extra notes when before generating an AuditTradeTrail.
 
 The full code and a daml script can be seen in [`AuditableTrade.daml`](templates/daml/AuditableTrade.daml)
 
@@ -315,3 +313,5 @@ Sequencer received the encrypted views of transactions and order them. Afterward
 For each participant node operator, the node will decrypt data and validate the sub-transactions and send back a confirmation to the sequencer.
 
 The mediator will collect all the confirmations from the informee participant nodes and reach a verdict if a transaction is valid or not. The verdict will pass back to the sequencer which send the result back to the informee particiant nodes.
+
+# Focus: Off-ledger automations and trigger patterns
