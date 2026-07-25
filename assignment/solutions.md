@@ -252,4 +252,6 @@ The first way is more direct and less complex in the transaction view generation
 
 The second way is more complex but offer more flexibility. For instance we can anonymize certain information or add extra notes when generating an AuditTradeTrail based on a trade.
 
+The full code and a daml script can be seen in [`AuditableTrade.daml`](templates/daml/AuditableTrade.daml)
+
 ## Theory - learn how to infer the authorizers and informees of a transaction (and subtransaction)
