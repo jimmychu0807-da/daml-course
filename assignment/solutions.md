@@ -168,8 +168,88 @@ Daml engine breaks them into sub-transaction / transaction projections so these 
 
 1. The submitting participant node forms all the needed transaction projections (tp), encrypt them, and send them to the sequencer.
 2. The sequencer sends these tp to the corresponding participant nodes that host the informee parties.
-3. These participant node run the daml model logic and validate the result. The results are sent back to the sequencer.
-4. The sequencer forward these result to the mediator to get a final verdict on whether the transaction is valid or not.
-5. The verdict, either a **commit** or **reject**, is then return back to the sequencer and get broadcast back to the informee participant nodes.
+3. These participant nodes run the daml model logic and validate the result. The results are sent back to the sequencer.
+4. The sequencer forward these results to the mediator to get a final verdict on whether the transaction is valid or not.
+5. The verdict, either a **commit** or **reject** depends on whether the tx is deemed valid, is then return back to the sequencer and get broadcast back to the informee participant nodes.
 
+## Hands on - contrive a couple of daml choice definitions that generate different numbers of transaction views, but at the application level achieve the same goal
 
+For example we want to create a DvP trade that can be audited. There are two approaches.
+
+1. Add the **auditor** party in the DvP trade template. So the auditor can observe the lifecycle and data of the contract.
+2. Create an AuditTrail contract derived from the DvP trade. When the trade is executed, create such an audit trail contract.
+
+The first way is implemented as follows.
+
+```daml
+template AuditableTradeV1
+  with
+    party1: Party
+    party2: Party
+    auditor: Party
+    asset1: ContractId SimpleAsset
+    asset2: ContractId SimpleAsset
+  where
+    signatory party1, party2
+    observer auditor
+
+    choice Settle: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        actor: Party
+      controller actor
+      do
+        assert (actor == party1 || actor == party2)
+        transferredAsset1 <- exercise asset1 Transfer with newOwner = party2
+        transferredAsset2 <- exercise asset2 Transfer with newOwner = party1
+        return (transferredAsset1, transferredAsset2)
+```
+
+The second way is implemented as follows.
+
+```daml
+template AuditableTradeV2
+  with
+    party1: Party
+    party2: Party
+    asset1: ContractId SimpleAsset
+    asset2: ContractId SimpleAsset
+    auditor: Party
+  where
+    signatory party1, party2
+
+    choice SettleWithAuditTrail: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        actor: Party
+      controller actor
+      do
+        assert (actor == party1 || actor == party2)
+
+        asset1Info <- fetch asset1
+        asset2Info <- fetch asset2
+
+        transferredAsset1 <- exercise asset1 Transfer with newOwner = party2
+        transferredAsset2 <- exercise asset2 Transfer with newOwner = party1
+
+        create AuditTradeTrail with
+          asset1 = asset1Info
+          asset2 = asset2Info
+          ..
+
+        return (transferredAsset1, transferredAsset2)
+
+template AuditTradeTrail
+  with
+    party1: Party
+    party2: Party
+    asset1: SimpleAsset
+    asset2: SimpleAsset
+    auditor: Party
+  where
+    signatory auditor
+```
+
+The first way is more direct and less complex in the transaction view generation, and later retrieval.
+
+The second way is more complex but offer more flexibility. For instance we can anonymize certain information or add extra notes when generating an AuditTradeTrail based on a trade.
+
+## Theory - learn how to infer the authorizers and informees of a transaction (and subtransaction)
