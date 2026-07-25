@@ -1,0 +1,163 @@
+module AuditableTrade where
+
+import Daml.Script
+import DA.Optional
+import DA.Assert
+
+template SimpleAsset
+  with
+    issuer: Party
+    owner: Party
+    asset: Text
+  where
+    signatory issuer
+    observer owner
+
+    choice Transfer: ContractId SimpleAsset
+      with
+        newOwner: Party
+      controller owner
+      do
+        create this with owner = newOwner
+
+template AuditableTradeV1
+  with
+    party1: Party
+    party2: Party
+    auditor: Party
+    asset1: ContractId SimpleAsset
+    asset2: ContractId SimpleAsset
+  where
+    signatory party1, party2
+    observer auditor
+
+    choice Settle: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        actor: Party
+      controller actor
+      do
+        assert (actor == party1 || actor == party2)
+        transferredAsset1 <- exercise asset1 Transfer with newOwner = party2
+        transferredAsset2 <- exercise asset2 Transfer with newOwner = party1
+        return (transferredAsset1, transferredAsset2)
+
+template AuditableTradeV2
+  with
+    party1: Party
+    party2: Party
+    asset1: ContractId SimpleAsset
+    asset2: ContractId SimpleAsset
+    auditor: Party
+  where
+    signatory party1, party2
+
+    choice SettleWithAuditTrail: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        actor: Party
+      controller actor
+      do
+        assert (actor == party1 || actor == party2)
+
+        asset1Info <- fetch asset1
+        asset2Info <- fetch asset2
+
+        transferredAsset1 <- exercise asset1 Transfer with newOwner = party2
+        transferredAsset2 <- exercise asset2 Transfer with newOwner = party1
+
+        create AuditTradeTrail with
+          asset1 = asset1Info
+          asset2 = asset2Info
+          ..
+
+        return (transferredAsset1, transferredAsset2)
+
+template AuditTradeTrail
+  with
+    party1: Party
+    party2: Party
+    asset1: SimpleAsset
+    asset2: SimpleAsset
+    auditor: Party
+  where
+    signatory auditor
+
+
+template ProposeTrade
+  with
+    proposer: Party
+    counterParty: Party
+    auditor: Party
+    allocated: ContractId SimpleAsset
+    expected: SimpleAsset
+  where
+    signatory proposer
+    observer counterParty
+
+    choice Accept: ContractId AuditableTradeV1
+      with
+        toBeAllocated: ContractId SimpleAsset
+      controller counterParty
+      do
+        fetchedAsset <- fetch toBeAllocated
+        assertEq fetchedAsset expected
+        create AuditableTradeV1 with
+          party1 = proposer
+          party2 = counterParty
+          asset1 = allocated
+          asset2 = toBeAllocated
+          auditor = auditor
+
+    nonconsuming choice AcceptAndSettle: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        toBeAllocated: ContractId SimpleAsset
+      controller counterParty
+      do
+        proposal <- exercise self Accept with ..
+        exercise proposal Settle with actor = counterParty
+
+testScript1 = script do
+  bank <- allocateParty "Bank"
+  sr <- allocateParty "StockRegistry"
+  auditor <- allocateParty "Auditor"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+
+  let
+    cash = SimpleAsset with
+      issuer = bank
+      owner = alice
+      asset = "200 dollars"
+
+    nvda = SimpleAsset with
+      issuer = sr
+      owner = bob
+      asset = "1 NVDA stock"
+
+  aliceCash <- submit bank do createCmd cash
+
+  bobNvda <- submit sr do createCmd nvda
+
+  bobProposal <- submit bob do
+    createCmd ProposeTrade with
+      proposer = bob
+      counterParty = alice
+      allocated = bobNvda
+      expected = cash
+      ..
+
+  disclosedNvda <- fromSome <$> queryDisclosure bob bobNvda
+
+  trade <- submit alice do
+    exerciseCmd bobProposal Accept with
+      toBeAllocated = aliceCash
+
+  -- The following would fail
+  -- submit alice do
+  --   exerciseCmd trade Settle with
+  --     actor = alice
+
+  submitWithDisclosures alice [disclosedNvda] do
+    exerciseCmd trade Settle with
+      actor = alice
+
+  return()

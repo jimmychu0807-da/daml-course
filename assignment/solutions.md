@@ -98,7 +98,7 @@ I followed [the forum post](https://forum.canton.network/t/multi-participant-dam
 
 The access_token is generated using `jwt-cli` command based on how [the docker entrypoint initialization](https://github.com/canton-network/splice/blob/main/cluster/compose/localnet/docker/console/entrypoint.sh#L15-L19).
 
-Then there is [the daml script](https://github.com/jimmychu0807-da/daml-course/blob/main/assignment/multi-participant/daml/TestProposeAcceptPattern.daml) that test a propose accept pattern with user creation and submission from different localnet participant nodes.
+Then there is [the daml script](https://github.com/jimmychu0807-da/daml-course/blob/main/assignment/multi-participant/daml/TestProposeAcceptPattern.daml) that test a propose accept pattern with user creation and submitting to different localnet participant nodes.
 
 There is a neat [Helpers.daml](https://github.com/jimmychu0807-da/daml-course/blob/main/assignment/multi-participant/daml/Helpers.daml) that is written by [Wallace](https://github.com/wallacekelly-da/daml-public-demos/blob/daml-script-participant-config/daml/Helpers.daml) for retrieving and allocating party in a remote participant node and submitting command and polling for completion.
 
@@ -109,3 +109,149 @@ During testing with localnet, I just stop and start the localnet to upload the d
 In real-world Daml project, when the testnet is deployed across multiple orgs, they cannot be stop and start at one's will, so one have to increment the dar version during the test iteration so the project code can be accepted.
 
 Also, currently I have hard-coded the ledger user jwt tokens in the participant-config file. In real-world, one would need to query an IAM server to get the necessary user credential to query and submit commands to the testnet.
+
+# Canton Transaction Basics
+
+## Theory - review our documentation on [API user rights](https://docs.digitalasset.com/build/3.4/sdlc-howtos/applications/secure/authorization.html#access-tokens-and-rights)
+
+It use OAuth 2.0 and the access token is issued in the form of jwt.
+
+Encoding signature:
+
+```
+{
+  "alg": "RS256",
+  "typ": "JWT"
+}
+```
+Audience-based tokens
+
+```
+{
+   "aud": "https://daml.com/jwt/aud/participant/someParticipantId",
+   "sub": "someUserId",
+   "iss": "someIdpId",
+   "exp": 1300819380
+}
+```
+The `aud` and `sub` fields are the required fields. The rest are optional.
+
+## Theory - how does Daml break down a transaction into nodes? What are transaction views? Why does the Daml engine break transactions into sub-transactions?
+
+- https://archived.docs.digitalasset.com/overview/3.4/explanations/ledger-model/ledger-structure.html
+- https://docs.daml.com/concepts/ledger-model/ledger-structure.html
+
+- action
+- subaction
+- transaction: multiple actions taken together
+
+A transaction consists of one or more action node, speicifically on:
+
+- **create**: creating a template. It will has no more subsequent actions.
+- **exercise**: exercising a choice on a template, which could cause more action.
+- **fetch**: fetching a contract. It will has no more subsequent actions.
+
+So a transaction could form a tree of action node based on the consequences of the root action. An example is shown below, showing the [**ProposeSimpleDvP::AcceptAndSettle**](./templates/daml/LedgerModel.daml) choice.
+
+![action-tree](./assets/action-node.svg)
+
+These actions (the transaction) are perform atomically on the Canton ledger, they either executed successfully altogether or not, there is no partial execution of these action nodes.
+
+Transaction views are also known as transaction projections. They are a subset of the action nodes (sub-tree) which are entitled to be seen by a particular party in a participant node. For a party to be able to see the action, they need to be an informee of the action.
+
+- For **contract** creation: signatory and contract observer are the informees.
+- For **consuming** exercise choice: signatory, contract observer, choice controller, choice observer are the informees.
+- For **non-consuming** exercise choice: signatory, choice controller, choice observer are the informees.
+- For **fetching** action: signatory, choice controller are the informees.
+
+Daml engine breaks them into sub-transaction / transaction projections so these projections are then encrypted and eventually sent to the corresponding participant node to validate. In details, the following happen:
+
+1. The submitting participant node forms all the needed transaction projections (tp), encrypt them, and send them to the sequencer.
+2. The sequencer sends these tp to the corresponding participant nodes that host the informee parties.
+3. These participant nodes run the daml model logic and validate the result. The results are sent back to the sequencer.
+4. The sequencer forward these results to the mediator to get a final verdict on whether the transaction is valid or not.
+5. The verdict, either a **commit** or **reject** depends on whether the tx is deemed valid, is then return back to the sequencer and get broadcast back to the informee participant nodes.
+
+## Hands on - contrive a couple of daml choice definitions that generate different numbers of transaction views, but at the application level achieve the same goal
+
+For example we want to create a DvP trade that can be audited. There are two approaches.
+
+1. Add the **auditor** party in the DvP trade template. So the auditor can observe the lifecycle and data of the contract.
+2. Create an AuditTrail contract derived from the DvP trade. When the trade is executed, create such an audit trail contract.
+
+The first way is implemented as follows.
+
+```daml
+template AuditableTradeV1
+  with
+    party1: Party
+    party2: Party
+    auditor: Party
+    asset1: ContractId SimpleAsset
+    asset2: ContractId SimpleAsset
+  where
+    signatory party1, party2
+    observer auditor
+
+    choice Settle: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        actor: Party
+      controller actor
+      do
+        assert (actor == party1 || actor == party2)
+        transferredAsset1 <- exercise asset1 Transfer with newOwner = party2
+        transferredAsset2 <- exercise asset2 Transfer with newOwner = party1
+        return (transferredAsset1, transferredAsset2)
+```
+
+The second way is implemented as follows.
+
+```daml
+template AuditableTradeV2
+  with
+    party1: Party
+    party2: Party
+    asset1: ContractId SimpleAsset
+    asset2: ContractId SimpleAsset
+    auditor: Party
+  where
+    signatory party1, party2
+
+    choice SettleWithAuditTrail: (ContractId SimpleAsset, ContractId SimpleAsset)
+      with
+        actor: Party
+      controller actor
+      do
+        assert (actor == party1 || actor == party2)
+
+        asset1Info <- fetch asset1
+        asset2Info <- fetch asset2
+
+        transferredAsset1 <- exercise asset1 Transfer with newOwner = party2
+        transferredAsset2 <- exercise asset2 Transfer with newOwner = party1
+
+        create AuditTradeTrail with
+          asset1 = asset1Info
+          asset2 = asset2Info
+          ..
+
+        return (transferredAsset1, transferredAsset2)
+
+template AuditTradeTrail
+  with
+    party1: Party
+    party2: Party
+    asset1: SimpleAsset
+    asset2: SimpleAsset
+    auditor: Party
+  where
+    signatory auditor
+```
+
+The first way is more direct and less complex in the transaction view generation, and later retrieval.
+
+The second way is more complex but offer more flexibility. For instance we can anonymize certain information or add extra notes when generating an AuditTradeTrail based on a trade.
+
+The full code and a daml script can be seen in [`AuditableTrade.daml`](templates/daml/AuditableTrade.daml)
+
+## Theory - learn how to infer the authorizers and informees of a transaction (and subtransaction)
