@@ -1,5 +1,7 @@
 module LedgerModel where
 
+import Daml.Script
+import DA.Optional
 import DA.Assert
 
 template SimpleAsset
@@ -25,8 +27,7 @@ template SimpleDvP
     asset1: ContractId SimpleAsset
     asset2: ContractId SimpleAsset
   where
-    signatory party1
-    signatory party2
+    signatory party1, party2
 
     choice Settle: (ContractId SimpleAsset, ContractId SimpleAsset)
       with
@@ -68,3 +69,49 @@ template ProposeSimpleDvP
       do
         dvp <- exercise self Accept with ..
         exercise dvp Settle with actor = counterParty
+
+
+testScript1 = script do
+  bank <- allocateParty "Bank"
+  sr <- allocateParty "StockRegistry"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+
+  let
+    cash = SimpleAsset with
+      issuer = bank
+      owner = alice
+      asset = "200 dollars"
+
+    nvda = SimpleAsset with
+      issuer = sr
+      owner = bob
+      asset = "1 NVDA stock"
+
+  aliceCash <- submit bank do createCmd cash
+
+  bobNvda <- submit sr do createCmd nvda
+
+  bobProposal <- submit bob do
+    createCmd ProposeSimpleDvP with
+      proposer = bob
+      counterParty = alice
+      allocated = bobNvda
+      expected = cash
+
+  disclosedNvda <- fromSome <$> queryDisclosure bob bobNvda
+
+  dvp <- submit alice do
+    exerciseCmd bobProposal Accept with
+      toBeAllocated = aliceCash
+
+  -- The following would fail
+  -- submit alice do
+  --   exerciseCmd dvp Settle with
+  --     actor = alice
+
+  submitWithDisclosures alice [disclosedNvda] do
+    exerciseCmd dvp Settle with
+      actor = alice
+
+  return()

@@ -98,7 +98,7 @@ I followed [the forum post](https://forum.canton.network/t/multi-participant-dam
 
 The access_token is generated using `jwt-cli` command based on how [the docker entrypoint initialization](https://github.com/canton-network/splice/blob/main/cluster/compose/localnet/docker/console/entrypoint.sh#L15-L19).
 
-Then there is [the daml script](https://github.com/jimmychu0807-da/daml-course/blob/main/assignment/multi-participant/daml/TestProposeAcceptPattern.daml) that test a propose accept pattern with user creation and submission from different localnet participant nodes.
+Then there is [the daml script](https://github.com/jimmychu0807-da/daml-course/blob/main/assignment/multi-participant/daml/TestProposeAcceptPattern.daml) that test a propose accept pattern with user creation and submitting to different localnet participant nodes.
 
 There is a neat [Helpers.daml](https://github.com/jimmychu0807-da/daml-course/blob/main/assignment/multi-participant/daml/Helpers.daml) that is written by [Wallace](https://github.com/wallacekelly-da/daml-public-demos/blob/daml-script-participant-config/daml/Helpers.daml) for retrieving and allocating party in a remote participant node and submitting command and polling for completion.
 
@@ -135,3 +135,41 @@ Audience-based tokens
 }
 ```
 The `aud` and `sub` fields are the required fields. The rest are optional.
+
+## Theory - how does Daml break down a transaction into nodes? What are transaction views? Why does the Daml engine break transactions into sub-transactions?
+
+- https://archived.docs.digitalasset.com/overview/3.4/explanations/ledger-model/ledger-structure.html
+- https://docs.daml.com/concepts/ledger-model/ledger-structure.html
+
+- action
+- subaction
+- transaction: multiple actions taken together
+
+A transaction consists of one or more action node, speicifically on:
+
+- **create**: creating a template. It will has no more subsequent actions.
+- **exercise**: exercising a choice on a template, which could cause more action.
+- **fetch**: fetching a contract. It will has no more subsequent actions.
+
+So a transaction could form a tree of action node based on the consequences of the root action. An example is shown below, showing the [**ProposeSimpleDvP::AcceptAndSettle**](./templates/daml/LedgerModel.daml) choice.
+
+![action-tree](./assets/action-node.svg)
+
+These actions (the transaction) are perform atomically on the Canton ledger, they either executed successfully altogether or not, there is no partial execution of these action nodes.
+
+Transaction views are also known as transaction projections. They are a subset of the action nodes (sub-tree) which are entitled to be seen by a particular party in a participant node. For a party to be able to see the action, they need to be an informee of the action.
+
+- For **contract** creation: signatory and contract observer are the informees.
+- For **consuming** exercise choice: signatory, contract observer, choice controller, choice observer are the informees.
+- For **non-consuming** exercise choice: signatory, choice controller, choice observer are the informees.
+- For **fetching** action: signatory, choice controller are the informees.
+
+Daml engine breaks them into sub-transaction / transaction projections so these projections are then encrypted and eventually sent to the corresponding participant node to validate. In details, the following happen:
+
+1. The submitting participant node forms all the needed transaction projections (tp), encrypt them, and send them to the sequencer.
+2. The sequencer sends these tp to the corresponding participant nodes that host the informee parties.
+3. These participant node run the daml model logic and validate the result. The results are sent back to the sequencer.
+4. The sequencer forward these result to the mediator to get a final verdict on whether the transaction is valid or not.
+5. The verdict, either a **commit** or **reject**, is then return back to the sequencer and get broadcast back to the informee participant nodes.
+
+
