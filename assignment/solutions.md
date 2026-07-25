@@ -112,6 +112,8 @@ Also, currently I have hard-coded the ledger user jwt tokens in the participant-
 
 # Canton Transaction Basics
 
+# Focus: Learn about Canton Transaction Processing and How it Implements Privacy
+
 ## Theory - review our documentation on [API user rights](https://docs.digitalasset.com/build/3.4/sdlc-howtos/applications/secure/authorization.html#access-tokens-and-rights)
 
 It use OAuth 2.0 and the access token is issued in the form of jwt.
@@ -148,7 +150,8 @@ The `aud` and `sub` fields are the required fields. The rest are optional.
 A transaction consists of one or more action node, speicifically on:
 
 - **create**: creating a template. It will has no more subsequent actions.
-- **exercise**: exercising a choice on a template, which could cause more action.
+- **consuming exercise option**: exercising a choice on a template, which could cause more action. Archive the contract.
+- **non-consuming exercise option**: exercising a choice on a template, but doesn't archive the contract.
 - **fetch**: fetching a contract. It will has no more subsequent actions.
 
 So a transaction could form a tree of action node based on the consequences of the root action. An example is shown below, showing the [**ProposeSimpleDvP::AcceptAndSettle**](./templates/daml/LedgerModel.daml) choice.
@@ -245,7 +248,8 @@ template AuditTradeTrail
     asset2: SimpleAsset
     auditor: Party
   where
-    signatory auditor
+    signatory party1, party2
+    observer auditor
 ```
 
 The first way is more direct and less complex in the transaction view generation, and later retrieval.
@@ -255,3 +259,59 @@ The second way is more complex but offer more flexibility. For instance we can a
 The full code and a daml script can be seen in [`AuditableTrade.daml`](templates/daml/AuditableTrade.daml)
 
 ## Theory - learn how to infer the authorizers and informees of a transaction (and subtransaction)
+
+As shown in the table below:
+
+![action-informee](./assets/action-informee.png) ([src](https://docs.canton.network/overview/reference/ledger-model-detailed#informee))
+
+For each type of action (create, consuming ex, non-consuming ex, fetch), we can see the corresponding informees from the above table.
+
+In term of authorizers, the key realization is the authorization scope. In particular, when exercising a choice, one is authorized, in addition as the choice controller party, also as the signatory party.
+
+That's why the propose-accept pattern (shown below) works.
+
+```daml
+template TradeProposal
+  with
+    proposer: Party
+    counterparty: Party
+    asset: Text
+    price: Decimal
+
+  where
+    signatory proposer
+    observer counterparty
+
+    choice Accept: ContractId Trade
+      controller counterparty
+      do
+        create Trade with
+          buyer = counterparty
+          seller = proposer
+          ..
+
+template Trade
+  with
+    buyer: Party
+    seller: Party
+    asset: Text
+    price: Decimal
+  where
+    signatory buyer, seller
+```
+
+Say Alice creates a **TradeProposal** contract with Bob as counterparty. When Bob exercises the `Accept` choice in the contract (the only one signing the tx), he is in the authorization scope of the signatory Alice. That's why he could create the Trade contract that require both the seller (Alice) and buyer (Bob) to be the signatories.
+
+Without this authorization scope, we would need both Alice and Bob to submit a transaction together to create a **Trade** contract.
+
+## Theory - learn about [Canton transaction processing](https://docs.daml.com/canton/architecture/overview.html)
+
+![transaction processing](./assets/canton-tx-processing.svg)
+
+There are two kind of nodes in a sync domain - sequencer and mediator.
+
+Sequencer received the encrypted views of transactions and order them. Afterward the sequencer will distribute these encrypted views to the corresponding informee participant nodes for validation.
+
+For each participant node operator, the node will decrypt data and validate the sub-transactions and send back a confirmation to the sequencer.
+
+The mediator will collect all the confirmations from the informee participant nodes and reach a verdict if a transaction is valid or not. The verdict will pass back to the sequencer which send the result back to the informee particiant nodes.

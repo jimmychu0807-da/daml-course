@@ -79,8 +79,8 @@ template AuditTradeTrail
     asset2: SimpleAsset
     auditor: Party
   where
-    signatory auditor
-
+    signatory party1, party2
+    observer auditor
 
 template ProposeTrade
   with
