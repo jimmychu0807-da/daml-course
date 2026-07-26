@@ -414,8 +414,6 @@ body: JSON.stringify({
 
 ## Check on the status of a submitted command by command ID
 
-
-
 ## Explore a transaction by update ID
 
 ## Explore a transaction by offset
@@ -423,7 +421,6 @@ body: JSON.stringify({
 ## List active contracts
 
 ## Check a contract’s contents and type by contract ID
-
 
 ## Check if a contract is archived by ID
 
