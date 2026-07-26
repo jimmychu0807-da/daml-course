@@ -315,3 +315,25 @@ For each participant node operator, the node will decrypt data and validate the 
 The mediator will collect all the confirmations from the informee participant nodes and reach a verdict if a transaction is valid or not. The verdict will pass back to the sequencer which send the result back to the informee particiant nodes.
 
 # Focus: Off-ledger automations and trigger patterns
+
+The following use the localnet setup.
+
+`<token>` is [generated here](https://github.com/canton-network/splice/blob/main/cluster/compose/localnet/docker/console/entrypoint.sh#L15-L19) and is as follow during the exercise.
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmdsb2JhbCIsInN1YiI6ImxlZGdlci1hcGktdXNlciJ9.A0VZW69lWWNVsjZmDDpVvr1iQ_dJLga3f-K2bicdtsc
+```
+
+## List dars
+
+**GET /v2/packages**
+
+```
+curl --request GET \
+  --url http://localhost:2975/v2/packages \
+  --header 'Authorization: Bearer <token>'
+```
+
+We will get back a list of `packageId`.
+
+
