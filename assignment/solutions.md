@@ -138,13 +138,6 @@ The `aud` and `sub` fields are the required fields. The rest are optional.
 
 ## Theory - how does Daml break down a transaction into nodes? What are transaction views? Why does the Daml engine break transactions into sub-transactions?
 
-- https://archived.docs.digitalasset.com/overview/3.4/explanations/ledger-model/ledger-structure.html
-- https://docs.daml.com/concepts/ledger-model/ledger-structure.html
-
-- action
-- subaction
-- transaction: multiple actions taken together
-
 A transaction consists of one or more action node, speicifically on:
 
 - **create**: creating a template. It will has no more subsequent actions.
@@ -326,21 +319,57 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmd
 
 ## Upload a dar
 
+**POST /v2/dars**
+
+Reading the dar file in raw binary format and put it in the request body.
+
+```ts
+const options = {
+  method: 'POST',
+  headers: {Authorization: 'Bearer <token>', 'Content-Type': 'application/octet-stream'},
+  body: JSON.stringify('<string>')
+};
+
+fetch('https://api.example.com/v2/dars', options)
+```
+
+ref: https://docs.canton.network/reference/json-api-reference/post-v2dars
+
 ## List dars
 
 **GET /v2/packages**
+
+ref: https://docs.canton.network/reference/json-api-reference/get-v2packages
+
+## Allocate a party
+
+**POST /v2/parties**
+
+Include the following in the request body
+
+```ts
+  body: JSON.stringify({
+    partyIdHint: '<string>',
+    localMetadata: {resourceVersion: '<string>', annotations: {}},
+    identityProviderId: '<string>',
+    synchronizerId: '<string>',
+    userId: '<string>'
+  })
+```
+
+ref: https://docs.canton.network/reference/json-api-reference/post-v2parties
 
 ## Allocate an external party
 
 **POST /v2/parties/external/allocate**
 
-https://docs.canton.network/reference/json-api-reference/post-v2partiesexternalallocate
+ref: https://docs.canton.network/reference/json-api-reference/post-v2partiesexternalallocate
 
 ## Grant rights from a user to a party
 
 1. During creating the party above, specify the `userId` in the body.
 
-  https://docs.canton.network/reference/json-api-reference/post-v2parties#body-user-id
+   https://docs.canton.network/reference/json-api-reference/post-v2parties#body-user-id
 
 2. Using the endpoint:
 
@@ -360,11 +389,11 @@ https://docs.canton.network/reference/json-api-reference/post-v2partiesexternala
 
 1. **/v2/commands/submit-and-wait-for-transaction**
 
-  and set to use `CreateCommand` inside,
+   Send the `CreateCommand` inside the request body.
 
-  ```ts
-  body: JSON.stringify({
-    commands: {
+   ```ts
+   body: JSON.stringify({
+     commands: {
       commands: [
         {
           CreateCommand: {
@@ -372,17 +401,19 @@ https://docs.canton.network/reference/json-api-reference/post-v2partiesexternala
             createArguments: '<unknown>',
           }
         }
-      ],
-      commandId: '<string>',
-      actAs: ['<string>'],
-      userId: '<string>',
-    }
-  })
-  ```
+       ],
+       commandId: '<string>',
+       actAs: ['<string>'],
+       userId: '<string>',
+     }
+   })
+   ```
 
-  This one will wait for its result and return the transaction.
+   This one will wait for its result and return the transaction.
 
-2. There are also **/v2/commands/submit-and-wait**, **POST /v2/commands/async/submit**
+2. There are also:
+   - **POST /v2/commands/submit-and-wait**, and
+   - **POST /v2/commands/async/submit**
 
 Questions:
 
