@@ -324,6 +324,9 @@ The following use the localnet setup.
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmdsb2JhbCIsInN1YiI6ImxlZGdlci1hcGktdXNlciJ9.A0VZW69lWWNVsjZmDDpVvr1iQ_dJLga3f-K2bicdtsc
 ```
 
+## Upload a dar
+
+
 ## List dars
 
 **GET /v2/packages**
