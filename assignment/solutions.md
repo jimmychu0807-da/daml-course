@@ -326,17 +326,107 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmd
 
 ## Upload a dar
 
-
 ## List dars
 
 **GET /v2/packages**
 
+## Allocate an external party
+
+**POST /v2/parties/external/allocate**
+
+https://docs.canton.network/reference/json-api-reference/post-v2partiesexternalallocate
+
+## Grant rights from a user to a party
+
+1. During creating the party above, specify the `userId` in the body.
+
+  https://docs.canton.network/reference/json-api-reference/post-v2parties#body-user-id
+
+2. Using the endpoint:
+
+   **POST /v2/users/:user-id/rights**
+
+   Inside the body:
+
+   ```ts
+    body: JSON.stringify({
+      userId: '<string>',
+      rights: [{kind: {CanActAs: {value: {party: '<string>'}}}}]
+    })
+   ```
+   https://docs.canton.network/reference/json-api-reference/post-v2users:user-idrights
+
+## Create a contract
+
+1. **/v2/commands/submit-and-wait-for-transaction**
+
+  and set to use `CreateCommand` inside,
+
+  ```ts
+  body: JSON.stringify({
+    commands: {
+      commands: [
+        {
+          CreateCommand: {
+            templateId: '<string>',
+            createArguments: '<unknown>',
+          }
+        }
+      ],
+      commandId: '<string>',
+      actAs: ['<string>'],
+      userId: '<string>',
+    }
+  })
+  ```
+
+  This one will wait for its result and return the transaction.
+
+2. There are also **/v2/commands/submit-and-wait**, **POST /v2/commands/async/submit**
+
+Questions:
+
+- what is the difference between [`async/submit`](https://docs.canton.network/reference/json-api-reference/post-v2commandsasyncsubmit) and [`async/submit-reassignment`](https://docs.canton.network/reference/json-api-reference/post-v2commandsasyncsubmit-reassignment)?
+
+## Exercise a choice
+
+Same as above, but inside the request body, use the `ExerciseCommand`.
+
+```ts
+body: JSON.stringify({
+  commands: {
+    commands: [
+      {
+        ExerciseCommand: {
+          templateId: '<string>',
+          contractId: '<string>',
+          choice: '<string>',
+          choiceArguments: '<unknown>',
+        }
+      }
+    ],
+    commandId: '<string>',
+    actAs: ['<string>'],
+    userId: '<string>',
+  }
+})
 ```
-curl --request GET \
-  --url http://localhost:2975/v2/packages \
-  --header 'Authorization: Bearer <token>'
-```
 
-We will get back a list of `packageId`.
+## Check on the status of a submitted command by command ID
 
 
+
+## Explore a transaction by update ID
+
+## Explore a transaction by offset
+
+## List active contracts
+
+## Check a contract’s contents and type by contract ID
+
+
+## Check if a contract is archived by ID
+
+## Get the participant node’s latest offset, and last pruned offset
+
+## Theory review the gRPC ledger API. This is actually our more hardened
