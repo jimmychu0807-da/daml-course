@@ -445,16 +445,110 @@ body: JSON.stringify({
 
 ## Check on the status of a submitted command by command ID
 
+Not sure. On the [`async/submit` page](https://docs.canton.network/reference/json-api-reference/post-v2commandsasyncsubmit), it mentions the triple (user_id, act_as, command_id) constitutes the change ID for the intended ledger change, where act_as is interpreted as a set of party names.
+
+The change ID can be used for matching the intended ledger changes with all their completions. So do we use the command ID to form the change ID triplet and use it to look up the command status?
+
 ## Explore a transaction by update ID
+
+**POST /v2/updates/update-by-id**
+
+The request body
+
+```ts
+const requestBody = JSON.stringify({
+  updateId: '<string>',
+  updateFormat: {
+    includeReassignments: {
+      filtersByParty: {},
+      filtersForAnyParty: {cumulative: [{identifierFilter: {Empty: {}}}]},
+      verbose: true
+    },
+    includeTopologyEvents: {includeParticipantAuthorizationEvents: {parties: ['<string>']}}
+  }
+})
+```
+
+https://docs.canton.network/reference/json-api-reference/post-v2updatesupdate-by-id
+
+Notice that this is a POST and not a GET request. It probably cause the FETCH action to be recorded.
 
 ## Explore a transaction by offset
 
+**POST /v2/updates/update-by-offset**
+
+Body
+
+```ts
+const requestBody = JSON.stringify({
+  "offset": <absolute-offset>
+});
+```
+
+https://docs.canton.network/reference/json-api-reference/post-v2updatesupdate-by-offset
+
+Question:
+
+- what offset is it? What is the base?
+
 ## List active contracts
+
+**POST /v2/state/active-contracts**
+
+Body
+
+```ts
+const body = JSON.stringify({
+  activeAtOffset: 123,
+  filter: {
+    filtersByParty: {},
+    filtersForAnyParty: {cumulative: [{identifierFilter: {Empty: {}}}]}
+  },
+  verbose: true,
+  eventFormat: {
+    filtersByParty: {},
+    filtersForAnyParty: {cumulative: [{identifierFilter: {Empty: {}}}]},
+    verbose: true
+  },
+  streamContinuationToken: '<string>'
+})
+```
+
+https://docs.canton.network/reference/json-api-reference/post-v2stateactive-contracts
 
 ## Check a contract’s contents and type by contract ID
 
+**POST /v2/contracts/contract-by-id**
+
+Body:
+
+```ts
+const options = {
+  body: JSON.stringify({
+    contractId: '<string>',
+    queryingParties: ['<string>']
+  })
+};
+```
+
+https://docs.canton.network/reference/json-api-reference/post-v2contractscontract-by-id
+
 ## Check if a contract is archived by ID
+
+Not sure, maybe **POST /v2/contracts/contract-by-id**, and check for the contract status?
 
 ## Get the participant node’s latest offset, and last pruned offset
 
-## Theory review the gRPC ledger API. This is actually our more hardened
+For latest offset
+
+**GET /v2/state/ledger-end**
+
+https://docs.canton.network/reference/json-api-reference/get-v2stateledger-end
+
+For last pruned offset
+
+**GET /v2/state/latest-pruned-offsets**
+
+https://docs.canton.network/reference/json-api-reference/get-v2statelatest-pruned-offsets
+
+## Theory review the gRPC ledger API. This is actually our more hardened API offering, while the JSON API is newer and still has UX teething issues.
