@@ -1,41 +1,63 @@
-import {CantonLedgerApi} from "./lib/CantonLedgerApi";
+import { Command } from "commander";
 
-const SERVER_ENDPOINT = "localhost:2975";
+import conf from "./config";
+import { Bot } from "./lib/Bot";
+import { CantonLedgerApi } from "./lib/CantonLedgerApi";
 
-const ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmdsb2JhbCIsInN1YiI6ImxlZGdlci1hcGktdXNlciJ9.A0VZW69lWWNVsjZmDDpVvr1iQ_dJLga3f-K2bicdtsc";
+const program = new Command();
 
-const PACKAGE_PATH = "../templates/.daml/dist/assignment-templates-0.0.1.dar";
+program
+  .name("canton-request")
+  .description("CLI to Canton off-ledger request and bot")
+  .version("0.1.0");
 
-const USER = "ledger-api-user";
+program
+  .command("upload-package")
+  .description("Upload a package to a remote canton endpoint")
+  .argument("<dar-filepath>", "filepath to the daml package")
+  .action(async (filePath) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
 
-async function main() {
-  const api = new CantonLedgerApi(SERVER_ENDPOINT, {
-    useHttps: false,
-    access_token: ACCESS_TOKEN
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    const result = await api.uploadPackage(filePath);
+
+    console.log("result:", result);
   });
 
-  console.log("--- Upload package ---");
-  let result = await api.uploadPackage(PACKAGE_PATH);
-  console.log(result);
+program
+  .command("list-packages")
+  .description("List all packages of a remote canton endpoint")
+  .action(async () => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
 
-  console.log("--- Listing packages ---");
-  result = await api.getPackages();
-  console.log(result);
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
 
-  console.log("--- Listing parties ---");
-  result = await api.getParties();
-  console.log(result);
+    const result = await api.getPackages();
+    console.log("result:", result);
+  });
 
-  console.log("--- allocate local party ---");
-  result = await api.allocateParty("Alice", USER);
-  console.log(result);
+program
+  .command("bot")
+  .description(
+    "bot that listen to a specific template and send an exercise choice correspondingly.",
+  )
+  .option("-p, --polling <value>", "polling time in seconds", "5")
+  .action(async (opts) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
 
-  console.log("--- Listing parties ---");
-  result = await api.getParties();
-  console.log(result);
-}
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
 
-main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
-});
+    await Bot.execute(api, opts);
+  });
+
+await program.parseAsync(process.argv);
