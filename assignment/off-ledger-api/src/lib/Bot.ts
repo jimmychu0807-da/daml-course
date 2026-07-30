@@ -11,9 +11,10 @@ const Bot = {
     while (true) {
       // your bot work here (query / exercise / etc.)
       const now = new Date();
-      console.log(now.toLocaleDateString());
+      console.log(now.toLocaleString());
 
-      const res = await api.getUpdate();
+      const res = await api.getUpdates();
+      console.log("--- getUpdates() ---\n", res);
 
       await new Promise((resolve) => setTimeout(resolve, pollingMs));
     }

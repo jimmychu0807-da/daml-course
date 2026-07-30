@@ -5,6 +5,13 @@ const mapping = {
     method: "GET",
     endpoint: "/v2/packages",
   },
+  getPackagesWithVettedInfo: {
+    method: "POST",
+    endpoint: "/v2/package-vetting/list",
+    opts: {
+      pageSize: 100,
+    },
+  },
   uploadPackage: {
     method: "POST",
     endpoint: "/v2/dars",
@@ -16,6 +23,10 @@ const mapping = {
   allocateParty: {
     method: "POST",
     endpoint: "/v2/parties",
+  },
+  getUpdates: {
+    method: "POST",
+    endpoint: "/v2/updates",
   },
 };
 
@@ -43,10 +54,39 @@ export class CantonLedgerApi {
       method,
       headers: {
         Authorization: `Bearer ${this.opts.accessToken}`,
-        "Content-Type": "application/octet-stream",
+        "Content-Type": "application/json",
       },
       signal: AbortSignal.timeout(TIMEOUT),
     });
+    return await response.json();
+  }
+
+  public async getPackagesWithVettedInfo(
+    packageNamePrefix?: string,
+    participantId?: string,
+  ) {
+    const { method, endpoint, opts } = mapping.getPackagesWithVettedInfo;
+    const fullEndpoint = `${this.httpScheme()}://${this.server}${endpoint}`;
+
+    const response = await fetch(fullEndpoint, {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      // note: you need to specify a body for the request to work
+      body: JSON.stringify({
+        packageMetadataFilter: packageNamePrefix
+          ? { packageNamePrefixes: [packageNamePrefix] }
+          : undefined,
+        topologyStateFilter: participantId
+          ? { participantIds: [participantId] }
+          : undefined,
+        ...opts,
+      }),
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+
     return await response.json();
   }
 
@@ -75,7 +115,7 @@ export class CantonLedgerApi {
     fullEndpoint.searchParams.set("vetAllPackages", "true");
 
     const fileContent = await readFile(filePath); // Buffer
-    console.log("file length:", fileContent.length);
+    console.log("read file length:", fileContent.length);
 
     const response = await fetch(fullEndpoint, {
       method,
@@ -100,6 +140,23 @@ export class CantonLedgerApi {
       body: JSON.stringify({
         partyIdHint,
         userId, // note: this value is omitted if undefined
+      }),
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+    return await response.json();
+  }
+
+  public async getUpdates() {
+    const { method, endpoint } = mapping.allocateParty;
+    const response = await fetch(this.getFullEndpoint(endpoint), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      body: JSON.stringify({
+        beginExclusive: 0,
+        verbose: true,
       }),
       signal: AbortSignal.timeout(TIMEOUT),
     });

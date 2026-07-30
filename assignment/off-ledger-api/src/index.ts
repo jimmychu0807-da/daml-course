@@ -29,8 +29,8 @@ program
   });
 
 program
-  .command("list-packages")
-  .description("List all packages of a remote canton endpoint")
+  .command("list-package-ids")
+  .description("List all package IDs of a remote canton endpoint")
   .action(async () => {
     const { ledgerEndpoint, useHttps, accessToken } = conf;
 
@@ -40,6 +40,23 @@ program
     });
 
     const result = await api.getPackages();
+    console.log("result:", result);
+  });
+
+program
+  .command("list-package-info")
+  .description("List all package info of a remote canton endpoint")
+  .option("-p, --package <string>", "package name filter")
+  .option("--pid <string>", "participantId")
+  .action(async (opts) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    const result = await api.getPackagesWithVettedInfo(opts.package, opts.pid);
     console.log("result:", result);
   });
 
