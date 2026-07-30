@@ -1,6 +1,7 @@
 import { Command } from "commander";
 
 import conf from "./config";
+import { Bot } from "./lib/Bot";
 import { CantonLedgerApi } from "./lib/CantonLedgerApi";
 
 const program = new Command();
@@ -39,8 +40,24 @@ program
     });
 
     const result = await api.getPackages();
-
     console.log("result:", result);
+  });
+
+program
+  .command("bot")
+  .description(
+    "bot that listen to a specific template and send an exercise choice correspondingly.",
+  )
+  .option("-p, --polling <value>", "polling time in seconds", "5")
+  .action(async (opts) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    await Bot.execute(api, opts);
   });
 
 await program.parseAsync(process.argv);
