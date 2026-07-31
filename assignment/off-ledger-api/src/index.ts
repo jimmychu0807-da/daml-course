@@ -119,6 +119,7 @@ program
     "bot that listen to a specific template and send an exercise choice correspondingly.",
   )
   .option("-p, --polling <value>", "polling time in seconds", "5")
+  .option("-o, --offset [number]", "offset to listen from", "0")
   .option("--partyId <value>", "PartyID and fingerprint")
   .option("--templateId <value>", "Template ID to listen to")
   .action(async (opts) => {
@@ -137,7 +138,8 @@ program
     });
 
     await Bot.execute(api, {
-      polling: opts.polling,
+      polling: Number(opts.polling),
+      offset: Number(opts.offset),
       partyId: opts.partyId ?? listeningPartyId,
       templateId: opts.templateId ?? listeningTemplateId,
     });

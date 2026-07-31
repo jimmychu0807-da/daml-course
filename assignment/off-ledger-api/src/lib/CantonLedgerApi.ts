@@ -210,7 +210,7 @@ export class CantonLedgerApi {
 
   public async getUpdates(
     opts: CantonLedgerApiGetUpdatesOpts,
-  ): Promise<unknown[]> {
+  ): Promise<{ update: unknown }[]> {
     const { method, endpoint } = mapping.getUpdates;
 
     const { offset, partyId, templateId } = opts;
@@ -245,7 +245,7 @@ export class CantonLedgerApi {
       signal: AbortSignal.timeout(TIMEOUT),
       verbose: VERBOSE,
     });
-    return (await response.json()) as unknown[];
+    return (await response.json()) as { update: unknown }[];
   }
 
   private httpScheme(): string {

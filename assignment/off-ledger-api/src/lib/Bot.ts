@@ -3,6 +3,7 @@ import type { CantonLedgerApi } from "./CantonLedgerApi";
 
 type CmdBotOpts = {
   polling: number;
+  offset: number;
   partyId: string;
   templateId: string;
 };
@@ -11,9 +12,9 @@ let botCmdReplySeq = 0;
 
 const Bot = {
   execute: async (api: CantonLedgerApi, opts: CmdBotOpts) => {
-    const { polling, partyId, templateId } = opts;
-    const pollingMs = Number(polling) * 1000;
-    let offset = 0;
+    const { polling, partyId, templateId, offset: optOffset } = opts;
+    const pollingMs = polling * 1000;
+    let offset = optOffset;
 
     console.log(`Connecting to ${api.remoteEndpoint}`);
 
@@ -31,7 +32,7 @@ const Bot = {
         console.dir(res, { depth: null, colors: true });
       }
 
-      const parsedUpdates = parseUpdates(res as any[]);
+      const parsedUpdates = parseUpdates(res);
 
       for (const update of parsedUpdates) {
         if ("OffsetCheckpoint" in update) {
@@ -63,7 +64,7 @@ const Bot = {
   },
 };
 
-function parseUpdates(updates: any[]) {
+function parseUpdates(updates: { update: unknown }[]) {
   return updates.map((o) => o.update);
 }
 
