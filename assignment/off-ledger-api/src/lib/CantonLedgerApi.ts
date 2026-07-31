@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
 
+import { VERBOSE } from "../config";
+
 const mapping = {
   getPackages: {
     method: "GET",
@@ -40,18 +42,28 @@ const mapping = {
 
 const TIMEOUT = 6000;
 
-type CantonLedgerApiOptions = {
+type CantonLedgerApiOpts = {
   useHttps: boolean;
   accessToken?: string;
 };
 
+type CantonLedgerApiGetUpdatesOpts = {
+  offset: number;
+  partyId: string;
+  templateId: string;
+};
+
 export class CantonLedgerApi {
   server: string;
-  opts: CantonLedgerApiOptions;
+  opts: CantonLedgerApiOpts;
 
   constructor(server: string, opts: CantonLedgerApiOptions) {
     this.server = server;
     this.opts = opts;
+  }
+
+  get remoteEndpoint(): string {
+    return `${this.httpScheme()}://${this.server}`;
   }
 
   public async getPackages() {
@@ -65,6 +77,7 @@ export class CantonLedgerApi {
         "Content-Type": "application/json",
       },
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
     return await response.json();
   }
@@ -93,6 +106,7 @@ export class CantonLedgerApi {
         ...opts,
       }),
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
 
     return await response.json();
@@ -109,6 +123,7 @@ export class CantonLedgerApi {
         "Content-Type": "application/octet-stream",
       },
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
     return await response.json();
   }
@@ -124,6 +139,7 @@ export class CantonLedgerApi {
         "Content-Type": "application/octet-stream",
       },
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
     return await response.json();
   }
@@ -146,6 +162,7 @@ export class CantonLedgerApi {
       },
       body: fileContent,
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
 
     return response.ok;
@@ -164,11 +181,12 @@ export class CantonLedgerApi {
         userId, // note: this value is omitted if undefined
       }),
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
     return await response.json();
   }
 
-  public async submitAndWaitForTx() {
+  public async submitCmds(cmdsObj: unknown) {
     const { method, endpoint } = mapping.submitAndWaitForTx;
     const response = await fetch(this.getFullEndpoint(endpoint), {
       method,
@@ -176,55 +194,54 @@ export class CantonLedgerApi {
         Authorization: `Bearer ${this.opts.accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        commands: {
-          commands: [
-            {
-              CreateCommand: {
-                templateId:
-                  "#assignment-templates:ProposeAcceptPattern:TradeProposal",
-                createArguments: {
-                  proposer:
-                    "app_user_localnet-localparty-1::122019d9144b432fe7cc1df7fa01fabc648681575ca8eacd2d66b1b733a89744dd4c",
-                  counterparty:
-                    "app_provider_localnet-localparty-1::1220f75a5712f3504f26a7476e8ccdadcf7058e79827a08892aadfabb8ff38aa358a",
-                  asset: "Bitcoin",
-                  price: "60000.0",
-                },
-              },
-            },
-          ],
-          commandId: "myCmd-01",
-          actAs: [
-            "app_user_localnet-localparty-1::122019d9144b432fe7cc1df7fa01fabc648681575ca8eacd2d66b1b733a89744dd4c",
-          ],
-        },
-      }),
+      body: JSON.stringify(cmdsObj),
       signal: AbortSignal.timeout(TIMEOUT),
-      verbose: true,
+      verbose: VERBOSE,
     });
 
     if (response.ok) {
-      return await response.json();
+      console.log("result:", await response.json());
+    } else {
+      console.log("error:", response);
     }
 
-    console.log("error:", response);
     return {};
   }
 
-  public async getUpdates() {
-    const { method, endpoint } = mapping.allocateParty;
+  public async getUpdates(opts: CantonLedgerApiGetUpdatesOpts) {
+    const { method, endpoint } = mapping.getUpdates;
+
+    const { offset, partyId, templateId } = opts;
+
     const response = await fetch(this.getFullEndpoint(endpoint), {
       method,
       headers: {
         Authorization: `Bearer ${this.opts.accessToken}`,
-        "Content-Type": "application/octet-stream",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        beginExclusive: 0,
-        verbose: true,
+        beginExclusive: offset,
+        filter: {
+          filtersByParty: {
+            [partyId]: {
+              cumulative: [
+                {
+                  identifierFilter: {
+                    TemplateFilter: {
+                      value: {
+                        templateId,
+                        includeCreatedEventBlob: true,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
       }),
       signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
     });
     return await response.json();
   }

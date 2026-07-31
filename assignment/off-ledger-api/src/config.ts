@@ -10,4 +10,20 @@ const conf = {
   accessToken,
 };
 
-export default conf;
+const botLedgerEndpoint = process.env.BOT_LEDGER_ENDPOINT ?? "";
+const botUseHttps = process.env.BOT_USE_HTTPS ?? "false";
+const botListeningTemplateId = process.env.BOT_LISTENING_TEMPLATE_ID;
+const botListeningPartyId = process.env.BOT_LISTENING_PARTY_ID;
+const botAccessToken = process.env.BOT_ACCESS_TOKEN;
+
+const botConf = {
+  ledgerEndpoint: botLedgerEndpoint,
+  useHttps: botUseHttps,
+  listeningTemplateId: botListeningTemplateId,
+  listeningPartyId: botListeningPartyId,
+  accessToken: botAccessToken,
+};
+
+const VERBOSE = true;
+
+export { botConf, conf, VERBOSE };

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
 import { Command } from "commander";
 
-import conf from "./config";
+import { botConf, conf } from "./config";
 import { Bot } from "./lib/Bot";
 import { CantonLedgerApi } from "./lib/CantonLedgerApi";
 
@@ -92,25 +94,11 @@ program
     console.log("result:", result);
   });
 
-program.command("submit-and-wait-for-tx").action(async (_opts) => {
-  const { ledgerEndpoint, useHttps, accessToken } = conf;
-
-  const api = new CantonLedgerApi(ledgerEndpoint, {
-    useHttps: useHttps.toUpperCase() === "TRUE",
-    accessToken,
-  });
-
-  const result = await api.submitAndWaitForTx();
-  console.log("result:", result);
-});
-
 program
-  .command("bot")
-  .description(
-    "bot that listen to a specific template and send an exercise choice correspondingly.",
-  )
-  .option("-p, --polling <value>", "polling time in seconds", "5")
-  .action(async (opts) => {
+  .command("submit-cmds")
+  .description("Submit commands to the ledger API")
+  .argument("<input-file>", "input command JSON filepath")
+  .action(async (inputFilePath) => {
     const { ledgerEndpoint, useHttps, accessToken } = conf;
 
     const api = new CantonLedgerApi(ledgerEndpoint, {
@@ -118,7 +106,41 @@ program
       accessToken,
     });
 
-    await Bot.execute(api, opts);
+    const inputFile = await readFile(inputFilePath, "utf8");
+    const cmdsObj = JSON.parse(inputFile);
+
+    const result = await api.submitCmds(cmdsObj);
+    console.log("result:", result);
+  });
+
+program
+  .command("bot")
+  .description(
+    "bot that listen to a specific template and send an exercise choice correspondingly.",
+  )
+  .option("-p, --polling <value>", "polling time in seconds", "5")
+  .option("--partyId <value>", "PartyID and fingerprint")
+  .option("--templateId <value>", "Template ID to listen to")
+  .action(async (opts) => {
+    // Bot use another set of config
+    const {
+      ledgerEndpoint,
+      useHttps,
+      accessToken,
+      listeningTemplateId,
+      listeningPartyId,
+    } = botConf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    await Bot.execute(api, {
+      polling: opts.polling,
+      partyId: opts.partyId ?? listeningPartyId,
+      templateId: opts.templateId ?? listeningTemplateId,
+    });
   });
 
 await program.parseAsync(process.argv);
