@@ -1,5 +1,5 @@
-import type { CantonLedgerApi } from "./CantonLedgerApi";
 import { VERBOSE } from "../config";
+import type { CantonLedgerApi } from "./CantonLedgerApi";
 
 type CmdBotOpts = {
   polling: number;
@@ -46,15 +46,15 @@ const Bot = {
           console.log("observe:", tx);
 
           // currently we only process transaction with first event is a CreatedEvent
-          if (!('CreatedEvent' in tx.events[0])) {
+          offset = tx.offset;
+          if (!("CreatedEvent" in tx.events[0])) {
             continue;
           }
 
           const exCmdObj = parseTxEventForExerciseChoice(tx.events[0], partyId);
 
-          const res = await api.submitCmds(exCmdObj);
-
-          console.log("Exercise Choice result:", res);
+          console.log("submitCmds:", exCmdObj);
+          await api.submitCmds(exCmdObj);
         }
       }
 
@@ -71,17 +71,19 @@ function parseTxEventForExerciseChoice(txEvent: any, partyId: string) {
   const { contractId, templateId } = txEvent.CreatedEvent;
   const retObj = {
     commands: {
-      commands: [{
-        ExerciseCommand: {
-          templateId,
-          contractId,
-          choice: "Accept",
-          choiceArgument: {},
-        }
-      }],
+      commands: [
+        {
+          ExerciseCommand: {
+            templateId,
+            contractId,
+            choice: "Accept",
+            choiceArgument: {},
+          },
+        },
+      ],
       commandId: `botCmd-${botCmdReplySeq}`,
-      actAs: [partyId]
-    }
+      actAs: [partyId],
+    },
   };
 
   botCmdReplySeq += 1;

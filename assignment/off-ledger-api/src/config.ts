@@ -24,6 +24,6 @@ const botConf = {
   accessToken: botAccessToken,
 };
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 export { botConf, conf, VERBOSE };
