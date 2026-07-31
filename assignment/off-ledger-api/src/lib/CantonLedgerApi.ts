@@ -53,6 +53,32 @@ type CantonLedgerApiGetUpdatesOpts = {
   templateId: string;
 };
 
+export type CantonLedgerApiUpdateResult = {
+  update:
+    | {
+        OffsetCheckpoint: {
+          value: {
+            offset: number;
+          };
+        };
+      }
+    | {
+        Transaction: {
+          value: {
+            offset: number;
+            events: [CantonLedgerApiCreatedEvent];
+          };
+        };
+      };
+};
+
+export type CantonLedgerApiCreatedEvent = {
+  CreatedEvent: {
+    contractId: string;
+    templateId: string;
+  };
+};
+
 export class CantonLedgerApi {
   server: string;
   opts: CantonLedgerApiOpts;
@@ -210,7 +236,7 @@ export class CantonLedgerApi {
 
   public async getUpdates(
     opts: CantonLedgerApiGetUpdatesOpts,
-  ): Promise<unknown[]> {
+  ): Promise<CantonLedgerApiUpdateResult[]> {
     const { method, endpoint } = mapping.getUpdates;
 
     const { offset, partyId, templateId } = opts;
@@ -245,7 +271,7 @@ export class CantonLedgerApi {
       signal: AbortSignal.timeout(TIMEOUT),
       verbose: VERBOSE,
     });
-    return (await response.json()) as unknown[];
+    return (await response.json()) as CantonLedgerApiUpdateResult[];
   }
 
   private httpScheme(): string {
