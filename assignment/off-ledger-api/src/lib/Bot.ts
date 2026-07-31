@@ -18,7 +18,7 @@ const Bot = {
     console.log(`Connecting to ${api.remoteEndpoint}`);
 
     while (true) {
-      // your bot work here (query / exercise / etc.)
+      // bot work here (query / exercise / etc.)
       const now = new Date();
       const res = await api.getUpdates({
         offset,
