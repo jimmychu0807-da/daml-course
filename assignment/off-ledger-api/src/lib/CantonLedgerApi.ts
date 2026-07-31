@@ -208,7 +208,9 @@ export class CantonLedgerApi {
     return {};
   }
 
-  public async getUpdates(opts: CantonLedgerApiGetUpdatesOpts) {
+  public async getUpdates(
+    opts: CantonLedgerApiGetUpdatesOpts,
+  ): Promise<unknown[]> {
     const { method, endpoint } = mapping.getUpdates;
 
     const { offset, partyId, templateId } = opts;
@@ -243,7 +245,7 @@ export class CantonLedgerApi {
       signal: AbortSignal.timeout(TIMEOUT),
       verbose: VERBOSE,
     });
-    return await response.json();
+    return (await response.json()) as unknown[];
   }
 
   private httpScheme(): string {
