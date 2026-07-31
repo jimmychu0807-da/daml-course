@@ -1,5 +1,9 @@
 import { VERBOSE } from "../config";
-import type { CantonLedgerApi } from "./CantonLedgerApi";
+import type {
+  CantonLedgerApi,
+  CantonLedgerApiCreatedEvent,
+  CantonLedgerApiUpdateResult,
+} from "./CantonLedgerApi";
 
 type CmdBotOpts = {
   polling: number;
@@ -64,11 +68,14 @@ const Bot = {
   },
 };
 
-function parseUpdates(updates: { update: unknown }[]) {
+function parseUpdates(updates: CantonLedgerApiUpdateResult[]) {
   return updates.map((o) => o.update);
 }
 
-function parseTxEventForExerciseChoice(txEvent: any, partyId: string) {
+function parseTxEventForExerciseChoice(
+  txEvent: CantonLedgerApiCreatedEvent,
+  partyId: string,
+) {
   const { contractId, templateId } = txEvent.CreatedEvent;
   const retObj = {
     commands: {
