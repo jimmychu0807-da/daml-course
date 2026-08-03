@@ -34,6 +34,10 @@ const mapping = {
     method: "POST",
     endpoint: "/v2/updates",
   },
+  getLedgerEnd: {
+    method: "GET",
+    endpoint: "/v2/state/ledger-end",
+  },
   submitAndWaitForTx: {
     method: "POST",
     endpoint: "/v2/commands/submit-and-wait-for-transaction",
@@ -206,6 +210,20 @@ export class CantonLedgerApi {
         partyIdHint,
         userId, // note: this value is omitted if undefined
       }),
+      signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
+    });
+    return await response.json();
+  }
+
+  public async getLedgerEnd() {
+    const { method, endpoint } = mapping.getLedgerEnd;
+    const response = await fetch(this.getFullEndpoint(endpoint), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
       signal: AbortSignal.timeout(TIMEOUT),
       verbose: VERBOSE,
     });
