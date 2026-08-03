@@ -63,6 +63,41 @@ program
   });
 
 program
+  .command("get-user-rights")
+  .description("Get the user rights for the particular user ID")
+  .argument("<user-id>", "User ID")
+  .action(async (userId) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    const result = await api.getUserRights(userId);
+    console.log(result);
+  });
+
+program
+  .command("set-user-rights")
+  .description("Set the user rights for the particular user ID")
+  .argument("<user-id>", "User ID")
+  .requiredOption("-i, --input <path>", "input command JSON filepath")
+  .action(async (userId, opts) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+    const { input: inputFilePath } = opts;
+    const inputFile = await readFile(inputFilePath, "utf8");
+    const rightsObj = JSON.parse(inputFile);
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    await api.setUserRights(userId, rightsObj);
+  });
+
+program
   .command("list-participant-id")
   .description("List participant ID")
   .option(
