@@ -5,8 +5,8 @@
         "CreateCommand": {
           "templateId": "#assignment-templates:ProposeAcceptPattern:TradeProposal",
           "createArguments": {
-            "proposer": "app_user_localnet-localparty-1::12200d2a67141d86195aa1d7f420da9a78d26af70516853f1de5408fd37e540bfc4a",
-            "counterparty": "app_provider_localnet-localparty-1::1220b0a4e78a2bb361715233047e44700c0221c830631c11796549a38fbb4035a63c",
+            "proposer": "app_user_localnet-localparty-1::1220c2dc6403fd727c399c95ced254b918028c00d852373098218bb03e2c5669101f",
+            "counterparty": "app_provider_localnet-localparty-1::12205d47c6f207a46d1d98892b73a392b2f8228978b19e6dd95de60c236b206ba715",
             "asset": "Bitcoin",
             "price": "60000.0"
           }
@@ -15,7 +15,7 @@
     ],
     "commandId": "myCmd01",
     "actAs": [
-      "app_user_localnet-localparty-1::12200d2a67141d86195aa1d7f420da9a78d26af70516853f1de5408fd37e540bfc4a"
+      "app_user_localnet-localparty-1::1220c2dc6403fd727c399c95ced254b918028c00d852373098218bb03e2c5669101f"
     ]
   }
 }
