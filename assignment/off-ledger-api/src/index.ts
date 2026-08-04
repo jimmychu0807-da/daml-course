@@ -39,6 +39,80 @@ program
   });
 
 program
+  .command("list-ledger-end")
+  .description("Get the latest offset")
+  .option(
+    "--network",
+    "list the ledger-end of the network, specified by NETWORK_ENDPOINTS env",
+  )
+  .action(async (opts) => {
+    const { ledgerEndpoint, networkEndpoints, useHttps, accessToken } = conf;
+
+    const endpoints = opts?.network ? networkEndpoints : [ledgerEndpoint];
+
+    for (const endpoint of endpoints) {
+      const api = new CantonLedgerApi(endpoint, {
+        useHttps: useHttps.toUpperCase() === "TRUE",
+        accessToken,
+      });
+
+      const result = await api.getLedgerEnd();
+
+      console.log(`${endpoint}:`, result);
+    }
+  });
+
+program
+  .command("get-authenticated-user")
+  .description("Get authenticated user of the provided access token")
+  .action(async () => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    const result = await api.getAuthenticatedUser();
+    console.log(result);
+  });
+
+program
+  .command("get-user-rights")
+  .description("Get the user rights for the particular user ID")
+  .argument("<user-id>", "User ID")
+  .action(async (userId) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    const result = await api.getUserRights(userId);
+    console.log(result);
+  });
+
+program
+  .command("set-user-rights")
+  .description("Set the user rights for the particular user ID")
+  .argument("<user-id>", "User ID")
+  .requiredOption("-i, --input <path>", "input command JSON filepath")
+  .action(async (userId, opts) => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+    const { input: inputFilePath } = opts;
+    const inputFile = await readFile(inputFilePath, "utf8");
+    const rightsObj = JSON.parse(inputFile);
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    await api.setUserRights(userId, rightsObj);
+  });
+
+program
   .command("list-participant-id")
   .description("List participant ID")
   .option(
@@ -63,22 +137,7 @@ program
   });
 
 program
-  .command("list-package-ids")
-  .description("List all package IDs of a remote canton endpoint")
-  .action(async () => {
-    const { ledgerEndpoint, useHttps, accessToken } = conf;
-
-    const api = new CantonLedgerApi(ledgerEndpoint, {
-      useHttps: useHttps.toUpperCase() === "TRUE",
-      accessToken,
-    });
-
-    const result = await api.getPackages();
-    console.log("result:", result);
-  });
-
-program
-  .command("list-package-info")
+  .command("list-packages")
   .description("List all package info of a remote canton endpoint")
   .option("-p, --package <string>", "package name filter")
   .option("--pid <string>", "participantId")
@@ -109,8 +168,7 @@ program
     const inputFile = await readFile(inputFilePath, "utf8");
     const cmdsObj = JSON.parse(inputFile);
 
-    const result = await api.submitCmds(cmdsObj);
-    console.log("result:", result);
+    await api.submitCmds(cmdsObj);
   });
 
 program

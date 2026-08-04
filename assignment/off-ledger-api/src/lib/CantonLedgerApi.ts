@@ -34,6 +34,22 @@ const mapping = {
     method: "POST",
     endpoint: "/v2/updates",
   },
+  getLedgerEnd: {
+    method: "GET",
+    endpoint: "/v2/state/ledger-end",
+  },
+  getUserRights: {
+    method: "GET",
+    endpoint: "/v2/users/:user-id/rights",
+  },
+  setUserRights: {
+    method: "POST",
+    endpoint: "/v2/users/:user-id/rights",
+  },
+  getAuthenticatedUser: {
+    method: "GET",
+    endpoint: "/v2/authenticated-user",
+  },
   submitAndWaitForTx: {
     method: "POST",
     endpoint: "/v2/commands/submit-and-wait-for-transaction",
@@ -212,6 +228,74 @@ export class CantonLedgerApi {
     return await response.json();
   }
 
+  public async getLedgerEnd() {
+    const { method, endpoint } = mapping.getLedgerEnd;
+    const response = await fetch(this.getFullEndpoint(endpoint), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
+    });
+    return await response.json();
+  }
+
+  public async getUserRights(userId: string) {
+    const { method, endpoint } = mapping.getUserRights;
+    const endpointFilled = endpoint.replace(":user-id", userId);
+    const response = await fetch(this.getFullEndpoint(endpointFilled), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
+    });
+    return await response.json();
+  }
+
+  public async setUserRights(userId: string, rightsObj: unknown) {
+    const { method, endpoint } = mapping.setUserRights;
+    const endpointFilled = endpoint.replace(":user-id", userId);
+    const body = JSON.stringify(rightsObj).replace(":user-id", userId);
+
+    const response = await fetch(this.getFullEndpoint(endpointFilled), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      body,
+      signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
+    });
+
+    if (response.ok) {
+      console.log("result:", await response.json());
+    } else {
+      console.log("error:", response);
+    }
+  }
+
+  public async getAuthenticatedUser() {
+    const { method, endpoint } = mapping.getAuthenticatedUser;
+
+    const response = await fetch(this.getFullEndpoint(endpoint), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
+    });
+
+    return await response.json();
+  }
+
   public async submitCmds(cmdsObj: unknown) {
     const { method, endpoint } = mapping.submitAndWaitForTx;
     const response = await fetch(this.getFullEndpoint(endpoint), {
@@ -230,8 +314,6 @@ export class CantonLedgerApi {
     } else {
       console.log("error:", response);
     }
-
-    return {};
   }
 
   public async getUpdates(

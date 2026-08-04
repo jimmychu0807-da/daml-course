@@ -1,0 +1,14 @@
+{
+  "userId": ":user-id",
+  "rights": [
+    {
+      "kind": {
+        "CanReadAs": {
+          "value": {
+            "party": "app_user_localnet-localparty-1::1220c2dc6403fd727c399c95ced254b918028c00d852373098218bb03e2c5669101f"
+          }
+        }
+      }
+    }
+  ]
+}
