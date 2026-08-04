@@ -551,4 +551,40 @@ For last pruned offset
 
 https://docs.canton.network/reference/json-api-reference/get-v2statelatest-pruned-offsets
 
-## Theory review the gRPC ledger API. This is actually our more hardened API offering, while the JSON API is newer and still has UX teething issues.
+## Theory - what value does PQS offer over using the ledger API directly?
+
+It is a postres database with helper functions such as:
+
+- `active(<fqn template name>)` - this cmd retrieves all the active contract set of the template name.
+
+- `lookup_contract(<contract_id>)` - this cmd looks up the info of a particular contract
+
+- `lookup_exercises(<contract_id>)` - this cmd looks up all exercise choices toward a contract
+
+So you can do complex relational query toward the database. As the query is operated by the DBMS, it also doesn't use the machine resources of the validator node.
+
+- You can also `prune` the transaction data in the PQS, keeping tx data starting from a certain offset.
+
+- There is also a `reset` action allowing you to remove all tx data after a certain offset.
+
+## Theory - what APIs does PQS provide for “freezing” the ledger offset during queries? What is the use case/benefit of such APIs?
+
+Using `set_oldest(offset)` and `set_latest(offset)` to set the upper and lower bound (range) of the ledger offset. Use `validate_offset_exists(offset)` to validate if the PQS has seen the particular offset.
+
+## Theory - research error handling. Which errors are likely to be transient errors? Which ones are likely to depend on the application design?
+
+src: https://docs.canton.network/appdev/reference/error-codes
+
+In each error, it includes the error category.
+
+Category 1-3: they are likely transient errors.
+
+- Category 1 (unavailable)
+- Category 2 (aborted)
+- Category 3 (deadline exceeded)
+
+Category 6-7: they are on authentication & permission related errors.
+
+Category 8: Invalid JWT user token.
+
+Category 9 - 12 are related to state-dependent and likely depend on the application design.

@@ -46,6 +46,10 @@ const mapping = {
     method: "POST",
     endpoint: "/v2/users/:user-id/rights",
   },
+  getAuthenticatedUser: {
+    method: "GET",
+    endpoint: "/v2/authenticated-user",
+  },
   submitAndWaitForTx: {
     method: "POST",
     endpoint: "/v2/commands/submit-and-wait-for-transaction",
@@ -274,6 +278,22 @@ export class CantonLedgerApi {
     } else {
       console.log("error:", response);
     }
+  }
+
+  public async getAuthenticatedUser() {
+    const { method, endpoint } = mapping.getAuthenticatedUser;
+
+    const response = await fetch(this.getFullEndpoint(endpoint), {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.opts.accessToken}`,
+        "Content-Type": "application/octet-stream",
+      },
+      signal: AbortSignal.timeout(TIMEOUT),
+      verbose: VERBOSE,
+    });
+
+    return await response.json();
   }
 
   public async submitCmds(cmdsObj: unknown) {

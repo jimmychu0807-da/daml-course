@@ -63,6 +63,21 @@ program
   });
 
 program
+  .command("get-authenticated-user")
+  .description("Get authenticated user of the provided access token")
+  .action(async () => {
+    const { ledgerEndpoint, useHttps, accessToken } = conf;
+
+    const api = new CantonLedgerApi(ledgerEndpoint, {
+      useHttps: useHttps.toUpperCase() === "TRUE",
+      accessToken,
+    });
+
+    const result = await api.getAuthenticatedUser();
+    console.log(result);
+  });
+
+program
   .command("get-user-rights")
   .description("Get the user rights for the particular user ID")
   .argument("<user-id>", "User ID")
