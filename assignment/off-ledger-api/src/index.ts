@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-
 import { Command } from "commander";
-
 import { botConf, conf } from "./config";
 import { Bot } from "./lib/Bot";
 import { CantonLedgerApi } from "./lib/CantonLedgerApi";
+import { PQSSql } from "./lib/CantonPQS";
 
 const program = new Command();
 
@@ -39,11 +38,11 @@ program
   });
 
 program
-  .command("list-ledger-end")
+  .command("get-ledger-end")
   .description("Get the latest offset")
   .option(
     "--network",
-    "list the ledger-end of the network, specified by NETWORK_ENDPOINTS env",
+    "get the ledger-end of the network, specified by NETWORK_ENDPOINTS env",
   )
   .action(async (opts) => {
     const { ledgerEndpoint, networkEndpoints, useHttps, accessToken } = conf;
@@ -131,7 +130,6 @@ program
       });
 
       const result = await api.getParticipantId();
-
       console.log(`${endpoint}:`, result);
     }
   });
@@ -169,6 +167,54 @@ program
     const cmdsObj = JSON.parse(inputFile);
 
     await api.submitCmds(cmdsObj);
+  });
+
+program
+  .command("pqs-active")
+  .description("Get active contracts")
+  .argument("[template]", "template name in fqn postfix form")
+  .action(async (templateName?: string) => {
+    const rows = await PQSSql`
+      SELECT template_fqn, payload_type, contract_id, life_ix, payload
+      FROM active(${templateName})
+    `;
+    console.log(rows);
+  });
+
+program
+  .command("pqs-creates")
+  .description("Get contracts ever created")
+  .argument("[template]", "template name in fqn postfix form")
+  .action(async (templateName?: string) => {
+    const rows = await PQSSql`
+      SELECT template_fqn, payload_type, contract_id, created_at_offset, archived_at_offset, payload
+      FROM creates(${templateName})
+    `;
+    console.log(rows);
+  });
+
+program
+  .command("pqs-lookup-contract")
+  .description("Get contract information")
+  .argument("<contract-id>", "The contract ID to retrieve")
+  .action(async (contractId: string) => {
+    const res = await PQSSql`
+      SELECT template_fqn, payload_type, contract_id, created_at_offset, archived_at_offset, payload
+      FROM lookup_contract(${contractId})
+    `;
+    console.log(res);
+  });
+
+program
+  .command("pqs-lookup-exercises")
+  .description("Get contract information")
+  .argument("<contract-id>", "The contract ID to retrieve")
+  .action(async (contractId: string) => {
+    const res = await PQSSql`
+      SELECT template_fqn, choice_fqn, consuming, exercised_at_offset, contract_id, result
+      FROM lookup_exercises(${contractId})
+    `;
+    console.log(res);
   });
 
 program

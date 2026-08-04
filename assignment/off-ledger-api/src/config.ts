@@ -24,6 +24,14 @@ const botConf = {
   accessToken: botAccessToken,
 };
 
+const pqsConf = {
+  host: process.env.PQS_POSTGRES_HOST ?? "",
+  port: Number(process.env.PQS_POSTGRES_PORT) || 5432,
+  user: process.env.PQS_POSTGRES_USER ?? "",
+  pw: process.env.PQS_POSTGRES_PASSWORD ?? "",
+  db: process.env.PQS_POSTGRES_DB ?? "",
+};
+
 const VERBOSE = false;
 
-export { botConf, conf, VERBOSE };
+export { botConf, conf, pqsConf, VERBOSE };
