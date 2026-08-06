@@ -112,8 +112,8 @@ template ProposeTrade
         toBeAllocated: ContractId SimpleAsset
       controller counterParty
       do
-        proposal <- exercise self Accept with ..
-        exercise proposal Settle with actor = counterParty
+        trade <- exercise self Accept with ..
+        exercise trade Settle with actor = counterParty
 
 testScript1 = script do
   bank <- allocateParty "Bank"
@@ -147,17 +147,8 @@ testScript1 = script do
 
   disclosedNvda <- fromSome <$> queryDisclosure bob bobNvda
 
-  trade <- submit alice do
-    exerciseCmd bobProposal Accept with
-      toBeAllocated = aliceCash
-
-  -- The following would fail
-  -- submit alice do
-  --   exerciseCmd trade Settle with
-  --     actor = alice
-
   submitWithDisclosures alice [disclosedNvda] do
-    exerciseCmd trade Settle with
-      actor = alice
+    exerciseCmd bobProposal AcceptAndSettle with
+      toBeAllocated = aliceCash
 
   return()
