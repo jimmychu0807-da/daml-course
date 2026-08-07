@@ -588,3 +588,17 @@ Category 6-7: they are on authentication & permission related errors.
 Category 8: Invalid JWT user token.
 
 Category 9 - 12 are related to state-dependent and likely depend on the application design.
+
+# Focus: Canton Coin, Token Stardard V1, Token Standard V2
+
+## Questions
+- what is the allocation and allocation request tab for?
+  http://localhost:2000/allocations
+
+-
+
+# Focus: Wallet SDK, wallet gateway
+
+# Focus: Registry app and dAppified registry UI
+
+# Focus: External party allocation - different permissions + confirmation thresholds
